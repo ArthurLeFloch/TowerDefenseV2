@@ -1,0 +1,98 @@
+'Cmd/Ctrl+Enter' `Toggle Box`
+'Alt+Enter' `Toggle Box`
+'Alt+D' `Toggle Done`
+'Alt+C' `Toggle Cancelled`
+'Alt+S' `Toggle Start`
+'Cmd/Ctrl+Shift+A' `Archive`
+
+game.py:
+  menu:
+    ☐ NEW MAP
+    ☐ OPEN MAP
+    ☐ SETTINGS
+  game:
+    ☐ Save trees
+    ☐ Load map option
+    ☐ Display informations for each tower boosts when choosing it (instead of just the name)
+
+    ☐ Make a path preview when deleting a tower ?
+    ☐ Make a path preview when deleting a tree ?
+    ☐ Make a path preview when adding a tile ?
+
+    `HARD MATH PROBLEM !`
+    ☐ Improve path finding ? Reducing amount of tiles ?  
+
+    ☐ Add alpha background to display settings (fps, ...)
+    ☐ Add color theme more 'natural' ?
+
+    ☐ Give speed buttons to game_menu
+
+enemies.py:
+  ☐ Bubbles : effect indicators
+
+buttons.py:
+  ☐ Add functions to switch tower focus mode
+  ☐ Image button to change tower focus type
+
+towers.py:
+  ✔ Add necessary levels to buy towers and upgrading it `IN towers.py` @done(23-01-21 10:01)
+  ☐ Add limits for every type of Tower, especially boosters `IN towers.py`
+  ☐ Save range image instead of re-calculating it each time -> currently reduce fps a lot
+
+Archive:
+  ✘ Remove levels.py, place all informations in towers.py @cancelled(23-01-21 09:59) @project(levels.py)
+  ✔ Improve possible path view @done(23-01-21 09:55) @project(game.py.game)
+  ✔ Clean UI code @started(23-01-15 09:23) @done(23-01-15 11:53) @lasted(2h30m33s) @project(game.py.game)
+  ✔ Show with UI element current xp @started(23-01-15 09:23) @done(23-01-15 11:53) @lasted(2h30m37s) @project(game.py.game)
+  ✔ Make % 5 waves red again @started(23-01-15 09:23) @done(23-01-15 09:26) @lasted(3m11s) @project(game.py.game)
+  ✔ Change shop to be used directly with Menu @done(23-01-15 11:53) @project(game.py.game)
+  ✘ Remove selection when nothing is selected @cancelled(23-01-21 09:51) @project(game.py.game)
+  ✔ Rework selection (remove ?) @done(23-01-21 09:51) @project(game.py.game)
+  ✔ Change how we can buy tiles (staying pushed to select tiles ?) @done(23-01-21 09:51) @project(game.py.game)
+  ✔ Change how trees can be removed (same as tiles can be added ?) @done(23-01-21 09:51) @project(game.py.game)
+  ✔ Save shop with price to gain fps ? @done(23-01-15 11:52) @project(game.py.game)
+  ✔ Fix wave going up does not increase enemies life @done(23-01-16 10:19) @project(game.py.game)
+  ✔ Rework upgrade menu (for better fps) @done(23-01-17 19:35) @project(game.py.game)
+  ✔ Make upgrade menu as a whole surface @done(23-01-17 20:55) @project(game.py.game)
+  ✔ Combine update right tab with update boost and update upgrade menu @done(23-01-17 20:55) @project(game.py.game)
+  ✔ Fix HealZone spawn when Healer reaches end @done(23-01-21 09:53) @project(enemies.py)
+  ✔ Add max level instead of constant 10 @done(23-01-16 10:06) @project(towers.py)
+  ✔ Create buying function to select a large area with UI @done(23-01-05 22:02) @project(game.py.game.Buy new tiles)
+  ✔ Make the text updates depending on price and current money @done(23-01-05 22:02) @project(game.py.game.Buy new tiles)
+  ✔ Create buying function to select a large area with UI @done(23-01-05 22:02) @project(game.py.game.Delete forests)
+  ✘ Make tree purchasable (increasing price) @cancelled(23-01-05 22:02) @project(game.py.game)
+  ✘ Large enemies can't go through trees ? (king of knights, giant) (= new path) @project(game.py.game) @cancelled(23-01-16 10:31)
+  ✘ Purchasable trees need to have a grow time (2 waves ?) then update large enemies paths @cancelled(23-01-05 22:02) @project(game.py.game)
+  ✔ Fix coin amount weirdly shown @done(23-01-05 22:02) @project(game.py.game)
+  ✔ Fix zone_damage not working properly (half are affected) @done(22-12-31 18:55) @project(enemies.py)
+  ✔ Remove events from arguments, only need "clicked_up" boolean and "pressed" @done(22-12-31 14:38) @project(buttons.py)
+  ✔ Add configurations for WIDTH, HEIGHT @done(22-12-27 22:46) @project(vscode)
+  ✔ Change coins value format ($ 138.548.567) @done(22-12-30 11:51) @project(game.py.game)
+  ✔ Rework shop_item @done(22-12-27 16:56) @project(game.py.game)
+  ✔ Rework right panel @done(22-12-28 19:16) @project(game.py.game)
+  ✔ Display informations for each boosts @done(22-12-27 16:56) @project(towers.py)
+  ✔ Create image for damage booster @done(22-12-29 21:59) @project(towers.py)
+  ✔ Add speed booster @done(22-12-29 21:59) @project(towers.py)
+  ✔ Change damage booster image @done(22-12-29 21:59) @project(towers.py)
+  ✘ Replace Enemy.last_earned with Game.last_earned @cancelled(22-12-27 11:24) @project(towers.py)
+  ✔ Add descriptions for effects @done(22-12-27 11:58) @project(towers.py)
+  ✔ Add Image class (path, image, size, pos, width, height) @done(22-12-28 19:15) @project(images.py)
+  ✔ Add image buttons @done(22-12-28 13:46) @project(buttons.py)
+  ✔ Image buttons to change game speed @done(22-12-28 19:15) @project(buttons.py)
+  ✔ Create image for range booster @done(22-12-25 19:47) @project(towers.py)
+  ✔ Rework Towers code @done(22-12-26 15:45) @project(towers.py)
+  ✔ Add 'confirm' button state, and apply it to delete towers @done(22-12-26 16:07) @project(buttons.py)
+  ✔ Navigation buttons @done(22-11-05 11:41) @project(game.py.menu)
+  ✔ Save map option (in %appdata%/.../saves) (saving array and towers) @started(22-11-05 14:51) @done(22-11-05 15:04) @lasted(13m20s) @project(game.py.game)
+  ✔ Make tower boosts not necessary @done(22-12-22 16:45) @project(game.py.game)
+  ✔ Display potential next path @started(22-11-05 15:05) @done(22-11-05 16:16) @lasted(1h11m23s) @project(game.py.game)
+  ✔ Text bubble @done(22-12-19 22:52) @project(game.py.game.Add possibility to buy new tiles close to the edges and delete forests)
+  ✔ Update coins @done(22-12-22 19:26) @project(game.py.game.Add possibility to buy new tiles close to the edges and delete forests)
+  ✔ Increase price each time @done(22-12-22 19:26) @project(game.py.game.Add possibility to buy new tiles close to the edges and delete forests)
+  ✔ Add groups of forest (enemies can go in, towers can't) using perlin noise @done(22-12-20 12:11) @project(game.py.game)
+  ✔ Making trees removable @done(22-12-20 12:11) @project(game.py.game)
+  ✘ Add new boosts for each towers @cancelled(22-12-22 16:44) @project(towers.py)
+  ✔ Add towers able to boost damages of other towers @done(22-12-23 20:05) @project(towers.py)
+  ✔ Add towers able to boost range of other towers @done(22-12-24 12:28) @project(towers.py)
+  ✔ Rework subclasses description_texts method more readable @done(22-12-24 12:28) @project(towers.py)
+  ✘ data-dependent theme @cancelled(22-11-05 11:41) @project(buttons.py)
