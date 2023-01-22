@@ -46,6 +46,9 @@ class Enemy:
     yoffset = 0
     tile_size = None
 
+    new_rects = []
+    last_rects = []
+
     lifebar = [None, None]
 
     starts = None
@@ -185,6 +188,8 @@ class Enemy:
         HealZone.range_im[1] = tmp2
 
     def update(SCREEN, wave):
+        Enemy.last_rects = Enemy.new_rects.copy()
+        Enemy.new_rects = []
         for cls in Enemy.subclasses:
             if cls.follow_path:
                 for enemy in Enemy.dict[cls.__name__]:
@@ -396,11 +401,15 @@ class Enemy:
             self.setup_health_bar()
         
         width, height = self.health_bar_size
-        SCREEN.blit(self.health_bar, (self.x - width / 2, self.y - self.__class__.imrad - 10 - height / 2))
+        rect = (self.x - width / 2, self.y - self.__class__.imrad - 10 - height / 2, *self.health_bar_size)
+        Enemy.new_rects.append(rect)
+        SCREEN.blit(self.health_bar, rect)
     
     def display(self, SCREEN):
         cls = self.__class__
-        SCREEN.blit(cls.image[self.corrupted], (self.x - cls.imrad, self.y - cls.imrad))
+        rect = (self.x - cls.imrad, self.y - cls.imrad, *cls.image[self.corrupted].get_size())
+        Enemy.new_rects.append(rect)
+        SCREEN.blit(cls.image[self.corrupted], (rect[0], rect[1]))
 
 class Knight(Enemy):
     follow_path = True
@@ -619,7 +628,9 @@ class HealZone(Enemy):
             if at_least_one:
                 healzone.tick = 0
         
-        SCREEN.blit(HealZone.range_im[healzone.corrupted], (healzone.x-healzone.radius, healzone.y-healzone.radius))           
+        rect = (healzone.x-healzone.radius, healzone.y-healzone.radius, HealZone.range_im[healzone.corrupted].get_size())
+        Enemy.new_rects.append(rect)
+        SCREEN.blit(HealZone.range_im[healzone.corrupted], (rect[0], rect[1]))
         healzone.display(SCREEN)
         if time.time()-healzone.last_hit < Enemy.SHOW_LIFE_TIME:
             healzone.show_health(SCREEN)

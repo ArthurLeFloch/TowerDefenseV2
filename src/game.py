@@ -198,9 +198,14 @@ def show_debug_menu():
             
             rendered_text = GAMEFONT.render(text, colors['settings'])
             text_width = rendered_text[0].get_width()
-            SCREEN.blit(rendered_text[0], (20, 20 + display_stats.offset))
+            rect = (20, 20 + display_stats.offset, *rendered_text[0].get_size())
+            new_rects.append(rect)
+            SCREEN.blit(rendered_text[0], (rect[0], rect[1]))
             
-            GAMEFONT.render_to(SCREEN, (20 + text_width, 20 + display_stats.offset), value, WHITE)
+            rendered_value = GAMEFONT.render(value, WHITE)
+            rect = (20 + text_width, 20 + display_stats.offset, *rendered_value[0].get_size())
+            new_rects.append(rect)
+            SCREEN.blit(rendered_value[0], (rect[0], rect[1]))
             display_stats.offset += 25
             
     def display_keys(texts_list, keys_list):
@@ -210,9 +215,14 @@ def show_debug_menu():
             
             rendered_text = GAMEFONT.render(key, WHITE)
             text_width = rendered_text[0].get_width()
-            SCREEN.blit(rendered_text[0], (20, 20 + display_keys.offset))
+            rect = (20, 20 + display_keys.offset, *rendered_text[0].get_size())
+            new_rects.append(rect)
+            SCREEN.blit(rendered_text[0], (rect[0], rect[1]))
             
-            GAMEFONT.render_to(SCREEN, (20 + text_width, 20 + display_keys.offset), text, colors['settings'])
+            rendered_key = GAMEFONT.render(text, colors['settings'])
+            rect = (20 + text_width, 20 + display_keys.offset, *rendered_key[0].get_size())
+            new_rects.append(rect)
+            SCREEN.blit(rendered_key[0], (rect[0], rect[1]))
             display_keys.offset += 25
     
     display_stats.offset = 0
@@ -270,7 +280,10 @@ def show_debug_menu():
         display_keys(texts, keys)
     
     if settings['dev']:
-        FONT.render_to(SCREEN, (20, HEIGHT-40), 'Dev.', WHITE)
+        rendered_text = FONT.render('Dev.', WHITE)
+        rect = (20, HEIGHT-40, *rendered_text[0].get_size())
+        new_rects.append(rect)
+        SCREEN.blit(rendered_text[0], (rect[0], rect[1]))
 
 def update_upgrade_menu(pressed, clicked_up):
     global selected_stats, selected_tower
@@ -416,7 +429,7 @@ def add_coins(value):
 
 def change_speed(speed):
     if speed != settings['speed']:
-        printf(f"Changed speed to {settings['speed']}")
+        printf(f"Changed speed to {speed}")
     settings['speed'] = speed
     ImageButton.unlock('speed_up')
     ImageButton.unlock('speed_down')
@@ -480,7 +493,7 @@ def remove_info_bubble():
 info_bubble = None
 info_rect = None
 
-tree_text, tile_text = [None]*2
+last_rects, new_rects = [], []
 
 printf('Initialization time : ' + str(time.time()-VARIABLE))
 
@@ -758,6 +771,7 @@ while execute:
                 game.update_left()
             if was_possible or (xc + cls.SIZE <= n and yc + cls.SIZE <= m and xc >= 0 and yc >= 0):
                 Tower.display_possible_place(SCREEN, xc, yc, cls, was_possible)
+            new_rects.append((x, y, *cls.image.get_size()))
             SCREEN.blit(cls.image, (x, y))
         else:
             was_possible = None
@@ -773,6 +787,7 @@ while execute:
                 cost = game.selection_tree_cost()
             elif game.selection_type == 'tile':
                 cost = game.selection_tile_cost()
+            new_rects.append((*pos, *images[game.coins < cost].get_size()))
             SCREEN.blit(images[game.coins < cost], pos)
 
             if not ImageButton.exists('confirm'):
@@ -828,11 +843,26 @@ while execute:
         prev_xc, prev_yc = xc, yc
 
         game.update_level()
-    
-    ImageButton.update(SCREEN, x, y, current_click_state, clicked_up)
+
+        ImageButton.update(SCREEN, x, y, current_click_state, clicked_up)
+
+        if game.need_tile_update:
+            pygame.display.update()
+        else:
+            new_rects.append((*game.menu.pos, *game.menu.size))
+            list = last_rects + new_rects
+            list += Button.last_rects + Button.new_rects
+            list += ImageButton.last_rects + ImageButton.new_rects
+            list += Enemy.last_rects + Enemy.new_rects
+            list += Tower.last_rects + Tower.new_rects
+            pygame.display.update(list)
+
+            last_rects = new_rects.copy()
+            new_rects = []
 
     last_click_state = current_click_state
-    pygame.display.update()
+    if current_menu != 'game':
+        pygame.display.update()
     clock.tick(FPS)
 
 pygame.quit()

@@ -99,6 +99,9 @@ class Tower:
     tile_size = None
     xoffset = 0
     yoffset = 0
+
+    new_rects = []
+    last_rects = []
     
     FONT = None
     PRICE_FONT = None
@@ -139,8 +142,7 @@ class Tower:
                 self.pos.append((x, y))
 
         # * Window relative
-        self.rect = [[a*tile_size + Tower.xoffset, b*tile_size +
-                      Tower.yoffset], cls.SIZE*tile_size, cls.SIZE*tile_size]
+        self.rect = [a*tile_size + Tower.xoffset, b*tile_size + Tower.yoffset, cls.SIZE*tile_size, cls.SIZE*tile_size]
         self.center = (a+cls.SIZE/2)*tile_size + \
             Tower.xoffset, (b+cls.SIZE/2)*tile_size + Tower.yoffset
 
@@ -298,8 +300,12 @@ class Tower:
 
     #region SCREEN RELATIVE FUNCTIONS
     def update(SCREEN, GAME_SCREEN, xc, yc, show_range = True, selected = None, update_game_screen = True):
+        Tower.last_rects = Tower.new_rects.copy()
+        Tower.new_rects = []
+
         EnemyEffect.update()
         Tower.looked = None
+
         for cls in Tower.subclasses:
             for tower in Tower.dict[cls.__name__]:
                 if selected:
@@ -308,21 +314,27 @@ class Tower:
                 elif (xc, yc) in tower.pos:
                     Tower.looked = tower, cls
                 if update_game_screen:
-                    GAME_SCREEN.blit(cls.image, (tower.rect[0][0], tower.rect[0][1]))
-                    GAME_SCREEN.blit(Tower.lvl_indicators[tower.lvl], (tower.rect[0][0] + tower.rect[1]-Tower.lvl_indicator_size, tower.rect[0][1] + tower.rect[2]-Tower.lvl_indicator_size))
+                    Tower.new_rects.append(tower.rect)
+                    GAME_SCREEN.blit(cls.image, (tower.rect[0], tower.rect[1]))
+                    rect = (tower.rect[0] + tower.rect[2]-Tower.lvl_indicator_size, tower.rect[1] + tower.rect[3]-Tower.lvl_indicator_size, *Tower.lvl_indicators[tower.lvl].get_size())
+                    Tower.new_rects.append(rect)
+                    GAME_SCREEN.blit(Tower.lvl_indicators[tower.lvl], (rect[0], rect[1]))
             for tower in Tower.dict[cls.__name__]:
                 tower.on_update()
+        
         if update_game_screen:
+            Tower.new_rects.append((0, 0, *GAME_SCREEN.get_size()))
             SCREEN.blit(GAME_SCREEN, (0, 0))
+        
         if Tower.looked and show_range:
             tower,cls = Tower.looked
             if hasattr(cls, "CLASSIC_RANGE"):
                 radius = tower.range
                 is_boosted = (tower.range_multiplier != 1)
-                if selected:
-                    SCREEN.blit(getRangeIm(radius, boosted = is_boosted), (tower.center[0]-radius, tower.center[1]-radius))
-                else:
-                    SCREEN.blit(getSimpleRangeIm(radius, boosted = is_boosted), (tower.center[0]-radius, tower.center[1]-radius))
+                range_im = getRangeIm(radius, boosted = is_boosted) if selected else getSimpleRangeIm(radius, boosted = is_boosted)
+                rect = (tower.center[0]-radius, tower.center[1]-radius, *range_im.get_size())
+                Tower.new_rects.append(rect)
+                SCREEN.blit(range_im, (rect[0], rect[1]))
 
     def display_possible_place(SCREEN, xc, yc, cls, is_valid):
         tile_size = Tower.tile_size
@@ -334,7 +346,10 @@ class Tower:
         if hasattr(cls, "CLASSIC_RANGE"):
             boost = Tower.get_range_boost(cls, *center)
             range = (cls.CLASSIC_RANGE[0]*boost + cls.SIZE/2) * Tower.tile_size
-            SCREEN.blit(getSimpleRangeIm(range, is_valid, (boost != 1)), (center[0] - range, center[1] - range))
+            range_im = getSimpleRangeIm(range, is_valid, (boost != 1))
+            rect = (center[0] - range, center[1] - range, *range_im.get_size())
+            Tower.new_rects.append(rect)
+            SCREEN.blit(range_im, (rect[0], rect[1]))
     #endregion
 
     #region TOWER RELATIVE FUNCTION
