@@ -27,6 +27,8 @@ game.py:
 
     ☐ Give speed buttons to game_menu
 
+    ☐ Keep track of updated rectangles to update faster
+
 enemies.py:
   ☐ Bubbles : effect indicators
 
