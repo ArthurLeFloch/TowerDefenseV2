@@ -526,6 +526,7 @@ while execute:
         SCREEN.blit(title, title_pos)
         
         if Button.clicked('new_map'):
+            pygame.display.update()
             new_game(n, m, rdi(1,3))
             nav_menu_to_game()
         elif Button.clicked('browse_maps'):

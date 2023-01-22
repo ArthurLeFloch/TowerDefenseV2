@@ -27,7 +27,9 @@ game.py:
 
     ☐ Give speed buttons to game_menu
 
-    ☐ Keep track of updated rectangles to update faster
+    ✔ Keep track of updated rectangles to update faster @done(23-01-22 11:00)
+
+    ☐ Fix graphic bug when selecting + click on info_bubble
 
 enemies.py:
   ☐ Bubbles : effect indicators
