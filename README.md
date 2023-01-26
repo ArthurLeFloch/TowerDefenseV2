@@ -12,4 +12,4 @@ As the number of passed waves increase, the initial life of the enemies is incre
 As the player level goes up, you can buy new towers and unlock new tower levels.
 
 ## License
-Tower Defense V2 is licensed under the [Apache License 2.0](https://github.com/ArthurLeFloch/TowerDefenseV2/blob/master/LICENSE).
+Tower Defense V2 is licensed under the [Apache License 2.0](LICENSE).
