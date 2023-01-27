@@ -5,6 +5,9 @@ The tilemap is designed using _perlin noise_, as well as the obstacles.
 
 Towers are placed directly on the grid (and enemies can't go through). Then, enemies find the shortest path to reach the end.
 
+## Installation
+In order to install necessary libraries such as pygame, please run the command 'pip install -r requirements.txt' 
+
 ## Waves
 As the number of passed waves increase, the initial life of the enemies is increased.
 
