@@ -169,7 +169,6 @@ def generate(x, y, start_count, minimum=0.55, empty_forest=False):
 
 
 def game_of_life(game, n, m):
-    np.savetxt('debug_data/current_map.csv', game, fmt="%d")
     def neighbours_count(array, i, j):
         count = 0
         for x in range(max(0, i-1), min(n, i+2)):
@@ -190,7 +189,6 @@ def game_of_life(game, n, m):
                     new_result[x, y] = 1
                 else:
                     new_result[x, y] = 0
-    np.savetxt('debug_data/game_of_life.csv', new_result, fmt="%d")
     return new_result
 
 def generate_forest(game, x, y, empty_forest=False):
