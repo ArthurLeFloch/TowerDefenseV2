@@ -294,7 +294,7 @@ class Tower:
         item3 = item.copy()
         tmptext = Tower.PRICE_FONT.render(f'LVL {cls.ALLOWED_LEVEL[0]}', (114, 22, 224))
 
-        text_pos = (45 - tmptext[0].get_width()/2, item_height-24)
+        text_pos = (48 - tmptext[0].get_width()/2, item_height-24)
 
         item3.blit(tmptext[0], text_pos)
         item3.blit(black_and_white(cls.shop_image), image_pos)
@@ -853,7 +853,7 @@ class DamageBooster(Booster):
     gradient_rect = [None, None, None]
     
     SIZE = 2
-    ALLOWED_LEVEL = [1, 2, 4, 8, 15, 23, 38, 54, 72, 92, 116]
+    ALLOWED_LEVEL = [2, 2, 4, 8, 15, 23, 38, 54, 72, 92, 116]
     COST = [5000,6000,7500,10000,13000,20000,40000,100000,175000,225000,300000]
     CAN_EFFECT = [Hut, Mortar, Wizard] # * No diffuser
     DAMAGE_MULTIPLIER = [1.15,1.2,1.25,1.3,1.35,1.4,1.45,1.5,1.55,1.6,1.65]
@@ -889,7 +889,7 @@ class RangeBooster(Booster):
     gradient_rect = [None, None, None]
     
     SIZE = 2
-    ALLOWED_LEVEL = [1, 2, 4, 8, 15, 23, 38, 54, 72, 92, 116]
+    ALLOWED_LEVEL = [2, 2, 4, 8, 15, 23, 38, 54, 72, 92, 116]
     COST = [5000,6000,7500,10000,13000,20000,40000,100000,175000,225000,300000]
     CAN_EFFECT = [Hut, Mortar, Wizard, FireDiffuser, PoisonDiffuser, SlownessDiffuser] # * No diffuser
     RANGE_MULTIPLIER = [1.15,1.2,1.25,1.3,1.35,1.4,1.45,1.5,1.55,1.6,1.65]
@@ -925,7 +925,7 @@ class SpeedBooster(Booster):
     gradient_rect = [None, None, None]
     
     SIZE = 2
-    ALLOWED_LEVEL = [1, 2, 4, 8, 15, 23, 38, 54, 72, 92, 116]
+    ALLOWED_LEVEL = [2, 2, 4, 8, 15, 23, 38, 54, 72, 92, 116]
     COST = [5000,6000,7500,10000,13000,20000,40000,100000,175000,225000,300000]
     CAN_EFFECT = [Hut, Mortar, Wizard, Bank] # * No diffuser
     SPEED_MULTIPLIER = [1.15,1.2,1.25,1.3,1.35,1.4,1.45,1.5,1.55,1.6,1.65]
