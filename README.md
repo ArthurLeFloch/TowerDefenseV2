@@ -5,6 +5,9 @@ The tilemap is designed using _perlin noise_, as well as the obstacles.
 
 Towers are placed directly on the grid (and enemies can't go through). Then, enemies find the shortest path to reach the end.
 
+## Installation
+In order to install necessary libraries such as pygame, please run the command 'pip install -r requirements.txt' 
+
 ## Waves
 As the number of passed waves increase, the initial life of the enemies is increased.
 
@@ -12,4 +15,4 @@ As the number of passed waves increase, the initial life of the enemies is incre
 As the player level goes up, you can buy new towers and unlock new tower levels.
 
 ## License
-Tower Defense V2 is licensed under the [Apache License 2.0](https://github.com/ArthurLeFloch/TowerDefenseV2/blob/master/LICENSE).
+Tower Defense V2 is licensed under the [Apache License 2.0](LICENSE).
