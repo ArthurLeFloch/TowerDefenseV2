@@ -108,7 +108,7 @@ class Tower:
     
     _LVL_PROPORTION = 1/2.
 
-    SHOP_ELEMENT_HEIGHT = 90
+    SHOP_ELEMENT_MIN_HEIGHT = 95
     
     lvl_colors = [
         (28, 29, 30),
@@ -270,30 +270,34 @@ class Tower:
         for k in range(len(texts)):
             text = texts[k]
             shown_text = Tower.FONT.render(text, (255, 255, 255) if k == 0 else (150, 150, 150))
-            item.blit(shown_text[0], (40 + width + (shop_width-40-width) / 2 - shown_text[0].get_width()/2, 10 + 20*k - 3))
+            item.blit(shown_text[0], (40 + width + (shop_width-40-width) / 2 - shown_text[0].get_width()/2, 10 + 22*k - 3))
         
         item.convert_alpha()
 
         # CAN BUY
         item1 = item.copy()
-        item1.blit(cls.shop_image, (20, 10))
         tmptext = Tower.PRICE_FONT.render(f'{cls.COST[0]} $', (90, 255, 90))
-        pos = (45 - tmptext[0].get_width()/2, item_height-20)
-        item1.blit(tmptext[0], pos)
+
+        text_pos = (48 - tmptext[0].get_width()/2, item_height-24)
+        image_pos = (text_pos[0] + tmptext[0].get_width() / 2 - cls.shop_image.get_width() / 2, text_pos[1] / 2 - cls.shop_image.get_height()/2)
+
+        item1.blit(tmptext[0], text_pos)
+        item1.blit(cls.shop_image, image_pos)
 
         # CANNOT BUY
         item2 = item.copy()
-        item2.blit(black_and_white(cls.shop_image), (20, 10))
         tmptext = Tower.PRICE_FONT.render(f'{cls.COST[0]} $', (240, 20, 20))
-        pos = (45 - tmptext[0].get_width()/2, item_height-20)
-        item2.blit(tmptext[0], pos)
+        item2.blit(tmptext[0], text_pos)
+        item2.blit(black_and_white(cls.shop_image), image_pos)
 
         # LOW LEVEL
         item3 = item.copy()
-        item3.blit(black_and_white(cls.shop_image), (20, 10))
         tmptext = Tower.PRICE_FONT.render(f'LVL {cls.ALLOWED_LEVEL[0]}', (114, 22, 224))
-        pos = (45 - tmptext[0].get_width()/2, item_height-20)
-        item3.blit(tmptext[0], pos)
+
+        text_pos = (45 - tmptext[0].get_width()/2, item_height-24)
+
+        item3.blit(tmptext[0], text_pos)
+        item3.blit(black_and_white(cls.shop_image), image_pos)
 
         return [cls, [item1, item2, item3]]
     #endregion

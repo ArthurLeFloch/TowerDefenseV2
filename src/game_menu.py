@@ -222,12 +222,13 @@ class Menu:
         Menu.LIFE_HEIGHT = height - 2 * Menu.LIFE_VER_MARGIN
 
         # Setting up SHOP constants
-        max_height = height - Menu.LEVEL_HEIGHT - Menu.COIN_HEIGHT - Menu.WAVE_HEIGHT - Menu.SPEED_HEIGHT - 2 * Menu.LEVEL_VER_MARGIN - 2 * Menu.COIN_VER_MARGIN - 2 * Menu.WAVE_VER_MARGIN - 2 * Menu.SPEED_VER_MARGIN - 8
-        Menu.SHOP_ITEM_PER_TAB = int(max_height / Tower.SHOP_ELEMENT_HEIGHT)
+        max_height = height - 8 - Menu.LEVEL_HEIGHT - Menu.COIN_HEIGHT - Menu.WAVE_HEIGHT - Menu.SPEED_HEIGHT - 2 * Menu.LEVEL_VER_MARGIN - 2 * Menu.COIN_VER_MARGIN - 2 * Menu.WAVE_VER_MARGIN - 2 * Menu.SPEED_VER_MARGIN - 8
+        Menu.SHOP_ITEM_PER_TAB = int(max_height / Tower.SHOP_ELEMENT_MIN_HEIGHT)
+        Menu.SHOP_ELEMENT_HEIGHT = max_height / Menu.SHOP_ITEM_PER_TAB
         Menu.SHOP_MAX_TAB = len(Tower.subclasses) / Menu.SHOP_ITEM_PER_TAB
 
         Menu.SHOP_POS = (x + Menu.SHOP_HOR_MARGIN, y + Menu.LEVEL_HEIGHT + 2 * Menu.LEVEL_VER_MARGIN + Menu.COIN_HEIGHT + 2 * Menu.COIN_VER_MARGIN + Menu.WAVE_HEIGHT + 2 * Menu.WAVE_VER_MARGIN + Menu.SPEED_HEIGHT + 2 * Menu.SPEED_VER_MARGIN + Menu.SHOP_VER_MARGIN)
-        Menu.SHOP_HEIGHT = Menu.SHOP_ITEM_PER_TAB * Tower.SHOP_ELEMENT_HEIGHT + 6
+        Menu.SHOP_HEIGHT = Menu.SHOP_ITEM_PER_TAB * Menu.SHOP_ELEMENT_HEIGHT + 6
         Menu.SHOP_WIDTH = width - Menu.LIFE_WIDTH - 2 * Menu.LIFE_HOR_MARGIN - 2 * Menu.SHOP_HOR_MARGIN
 
         # Setting up RECT constants
@@ -423,14 +424,14 @@ class Menu:
     def setup_shop(self):
         right_tab = pygame.Surface((Menu.SHOP_WIDTH, Menu.SHOP_HEIGHT), pygame.SRCALPHA)
 
-        self.shop_items_per_tab = int(Menu.SHOP_HEIGHT / Tower.SHOP_ELEMENT_HEIGHT) - 1
+        self.shop_items_per_tab = Menu.SHOP_ITEM_PER_TAB
         pygame.draw.rect(right_tab, (0, 0, 0), (0, 0, Menu.SHOP_WIDTH, Menu.SHOP_HEIGHT), border_radius=10)
-        pygame.draw.rect(right_tab, (15, 21, 27), (1, 1, Menu.SHOP_WIDTH - 6, Menu.SHOP_HEIGHT-6), border_radius=10)
+        pygame.draw.rect(right_tab, (15, 21, 27), (1, 1, Menu.SHOP_WIDTH - 6, Menu.SHOP_HEIGHT - 6), border_radius=10)
         self.right_tab = right_tab
 
         shop = right_tab.copy()
         for k in range(self.shop_items_per_tab):
-            pygame.draw.line(shop, (0, 0, 0), (0, Tower.SHOP_ELEMENT_HEIGHT * (k + 1)), (Menu.SHOP_WIDTH, Tower.SHOP_ELEMENT_HEIGHT * (k + 1)), width=3)
+            pygame.draw.line(shop, (0, 0, 0), (0, Menu.SHOP_ELEMENT_HEIGHT * (k + 1)), (Menu.SHOP_WIDTH, Menu.SHOP_ELEMENT_HEIGHT * (k + 1)), width=3)
 
         self.shop = shop.convert_alpha()
 
@@ -447,17 +448,17 @@ class Menu:
             data = self.shop_items[k]
             cls = data[0]
             if self.val_level < cls.ALLOWED_LEVEL[0]:
-                screen.blit(data[1][2], (x, y + Tower.SHOP_ELEMENT_HEIGHT * (k - fi)))
+                screen.blit(data[1][2], (x, y + Menu.SHOP_ELEMENT_HEIGHT * (k - fi)))
             elif self.val_coin < cls.COST[0]:
-                screen.blit(data[1][1], (x, y + Tower.SHOP_ELEMENT_HEIGHT * (k - fi)))
+                screen.blit(data[1][1], (x, y + Menu.SHOP_ELEMENT_HEIGHT * (k - fi)))
             else:
-                screen.blit(data[1][0], (x, y + Tower.SHOP_ELEMENT_HEIGHT * (k - fi)))
+                screen.blit(data[1][0], (x, y + Menu.SHOP_ELEMENT_HEIGHT * (k - fi)))
 
     def setup_shop_items(self):
         self.shop_first_item = 0
         self.shop_item_count = len(Tower.subclasses)
         for cls in Tower.subclasses:
-            self.shop_items.append(cls.shop_item(Menu.SHOP_WIDTH, Tower.SHOP_ELEMENT_HEIGHT))
+            self.shop_items.append(cls.shop_item(Menu.SHOP_WIDTH, Menu.SHOP_ELEMENT_HEIGHT))
 
     def shop_navigate(self, offset):
         if offset > 0:
@@ -471,7 +472,7 @@ class Menu:
         for k in range(fi, min(fi + Menu.SHOP_ITEM_PER_TAB, self.shop_item_count)):
             data = self.shop_items[k]
             cls = data[0]
-            if is_on_rect((xm, ym), ([x, y + Tower.SHOP_ELEMENT_HEIGHT * (k - fi)], Menu.SHOP_WIDTH, 90)) and self.val_coin >= cls.COST[0]:
+            if is_on_rect((xm, ym), ([x, y + Menu.SHOP_ELEMENT_HEIGHT * (k - fi)], Menu.SHOP_WIDTH, 90)) and self.val_coin >= cls.COST[0]:
                 return cls
         
     #endregion
