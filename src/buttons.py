@@ -13,6 +13,9 @@ def get_image(size, place):
 
 class Button:
     
+    new_rects = []
+    last_rects = []
+
     FONT = None
     BOLD_FONT = None
     
@@ -74,6 +77,8 @@ class Button:
         self.current_text = new_text
     
     def update(window, x, y, pressed, clicked_up):
+        Button.last_rects = Button.new_rects.copy()
+        Button.new_rects = []
         for key in Button.dict:
             self = Button.dict[key]
 
@@ -102,21 +107,26 @@ class Button:
                     self.confirmed = True
                 self.clickedUp = True
             
+            rect = (*self.pos, *self.size)
+            Button.new_rects.append(rect)
+
             if self.locked:
-                window.blit(self.im_dict['locked'], (self.pos[0], self.pos[1]))
+                window.blit(self.im_dict['locked'], (rect[0], rect[1]))
             elif self.down or (self.need_confirmation and self.clickedUp):
-                window.blit(self.im_dict['down'], (self.pos[0], self.pos[1]))
+                window.blit(self.im_dict['down'], (rect[0], rect[1]))
             elif hovered and self.hoverable:
-                window.blit(self.im_dict['hovered'], (self.pos[0], self.pos[1]))
+                window.blit(self.im_dict['hovered'], (rect[0], rect[1]))
             else:
-                window.blit(self.im_dict['classic'], (self.pos[0], self.pos[1]))
+                window.blit(self.im_dict['classic'], (rect[0], rect[1]))
             
+            color = (255, 255, 255)
             if self.locked:
-                text = self.font.render(self.current_text, (70, 70, 70))
-            else:
-                text = self.font.render(self.current_text, (255, 255, 255))
-            
-            window.blit(text[0], (self.pos[0]+self.size[0]//2-text[1].width//2, self.pos[1]+self.size[1]//2-text[1].height//2))
+                color = (70, 70, 70)
+            text = self.font.render(self.current_text, color)
+
+            rect = (self.pos[0]+self.size[0]//2-text[1].width//2, self.pos[1]+self.size[1]//2-text[1].height//2, *text[0].get_size())
+            Button.new_rects.append(rect)
+            window.blit(text[0], (rect[0], rect[1]))
     
     def delete(*names):
         current_keys = Button.dict.keys()
@@ -156,6 +166,9 @@ class Button:
 
 class ImageButton:
     dict = {}
+
+    new_rects = []
+    last_rects = []
     
     def __init__(self, name, image_path, pos=(100, 100), size=(50, 50), hoverable = True, thickness = 3, extern_thickness=1, intern_thickness=2, locked = False):
         self.pos = pos
@@ -176,7 +189,6 @@ class ImageButton:
         self.hovered = False
         ImageButton.dict[name] = self
 
-    # ! CONVERT ALPHA IMAGES
     def setup(self):
         locked = pygame.Surface(self.size, pygame.SRCALPHA)
         pygame.draw.rect(locked, (60, 60, 60), (0, 0, self.size[0], self.size[1]),border_radius=10)
@@ -226,6 +238,8 @@ class ImageButton:
         return (name in ImageButton.dict.keys())
     
     def update(window, x, y, pressed, clicked_up):
+        ImageButton.last_rects = Button.new_rects.copy()
+        ImageButton.new_rects = []
         for key in ImageButton.dict:
             self = ImageButton.dict[key]
 
@@ -244,14 +258,17 @@ class ImageButton:
             if clicked_up and self.down and not self.locked:
                 self.clickedUp = True
             
+            rect = (*self.pos, *self.size)
+            ImageButton.new_rects.append(rect)
+
             if self.locked:
-                window.blit(self.im_dict['locked'], (self.pos[0], self.pos[1]))
+                window.blit(self.im_dict['locked'], (rect[0], rect[1]))
             elif self.down:
-                window.blit(self.im_dict['down'], (self.pos[0], self.pos[1]))
+                window.blit(self.im_dict['down'], (rect[0], rect[1]))
             elif hovered and self.hoverable:
-                window.blit(self.im_dict['hovered'], (self.pos[0], self.pos[1]))
+                window.blit(self.im_dict['hovered'], (rect[0], rect[1]))
             else:
-                window.blit(self.im_dict['classic'], (self.pos[0], self.pos[1]))
+                window.blit(self.im_dict['classic'], (rect[0], rect[1]))
     
     def ex_and_clicked(name):
         return ImageButton.exists(name) and ImageButton.dict[name].clickedUp
