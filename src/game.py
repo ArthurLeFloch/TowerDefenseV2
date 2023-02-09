@@ -8,6 +8,7 @@ import contextlib
 with contextlib.redirect_stdout(None):
 	import pygame
 from pygame.locals import *
+import pygame.freetype
 
 from buttons import Button, ImageButton
 from enemies import Dragon, Enemy, Goblin, Healer, HealZone, KingOfKnights, Knight, Giant
