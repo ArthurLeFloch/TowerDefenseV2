@@ -1,5 +1,6 @@
 import pygame
 import os
+import time
 
 from tower_description import InstanceDescription as desc
 from tower_description import ShopDescription as shop_desc
@@ -153,7 +154,7 @@ class Tower:
 		self.lvl = lvl
 
 		self.chosen_boost = 0
-		self.tick = 0
+		self.last_hit = time.time()
 		self.shot = 0
 		Tower.amount += 1
 
@@ -388,7 +389,7 @@ class Tower:
 		Tower.amount -= 1
 	
 	def level_up(self):
-		self.tick = 0
+		self.last_hit = time.time()
 		self.lvl += 1
 		if hasattr(self, "on_level_up"):
 			self.on_level_up()
@@ -408,8 +409,8 @@ class Tower:
 		return cls.CLASSIC_DAMAGE[tower.lvl]*tower.damage_multiplier
 	
 	def is_loaded(self):
-		reload_speed = int(self.__class__.CLASSIC_RELOAD_SPEED[self.lvl] / (Tower.speed * self.speed_multiplier))
-		return (self.tick >= reload_speed)
+		reload_time = self.__class__.CLASSIC_RELOAD_SPEED[self.lvl] / (Tower.speed * self.speed_multiplier)
+		return (time.time() - self.last_hit) >= reload_time
 	
 	@property
 	def is_choosing_boost(self):
@@ -498,7 +499,7 @@ class Hut(Classic):
 	ALLOWED_LEVEL = [1, 2, 4, 8, 15, 23, 38, 54, 72, 92, 116]
 	COST = [100,250,420,630,890,1450,2700,5200,11000,24000,45000]
 	CAN_ATTACK = [Knight, Goblin, Dragon, KingOfKnights, Giant, Healer, HealZone]
-	CLASSIC_RELOAD_SPEED = [200,190,180,180,170,160,160,140,120,100,80]
+	CLASSIC_RELOAD_SPEED = [0.5, 0.475, 0.45, 0.45, 0.425, 0.4, 0.4, 0.35, 0.3, 0.25, 0.2]
 	CLASSIC_DAMAGE = [100,120,150,200,275,380,500,635,770,940,1100]
 	CLASSIC_RANGE = [5,5,5,5.5,5.5,6,6,6.5,6.5,7,7]
 
@@ -510,7 +511,6 @@ class Hut(Classic):
 		Tower.__init__(self, (x, y), lvl=level)
 
 	def on_update(sniper):
-		sniper.tick += 1
 		if sniper.is_loaded():
 			closer = Enemy.get_closer(Hut.CAN_ATTACK, sniper.center, sniper.range)
 			if closer != None:
@@ -520,13 +520,13 @@ class Hut(Classic):
 					closer.apply_effect(Poison, effect)
 				elif sniper.chosen_boost == 2:
 					Enemy.last_earned += Hut.GOLD_TOUCH_AMOUNT[sniper.lvl]
-				sniper.tick = 0
+				sniper.last_hit = time.time()
 				sniper.shot += 1
 	
 	@classmethod
 	def shop_item(cls, shop_width, item_height):
 		range = shop_desc.range(cls)
-		dpt = shop_desc.damage_per_tick(cls)
+		dpt = shop_desc.damage_per_sec(cls)
 		return Tower.setup_shop_item(cls, shop_width, item_height, [range, dpt])
 	
 	def description_texts(self, upgrade, boost):
@@ -535,7 +535,7 @@ class Hut(Classic):
 			if self.chosen_boost == 1:
 				effect_level = desc.effect_level(self, upgrade)
 				duration = desc.effect_duration(self, upgrade)
-				dpt = desc.effect_damage_per_tick(self, upgrade)
+				dpt = desc.effect_damage_per_sec(self, upgrade)
 				return [level, effect_level, duration, dpt]
 			elif self.chosen_boost == 2:
 				gold_touch = desc.gold_touch(self, upgrade)
@@ -543,8 +543,8 @@ class Hut(Classic):
 		else:
 			radius = desc.range(self, upgrade)
 			damage = desc.damage(self, upgrade)
-			damage_per_tick = desc.damage_per_tick(self, upgrade)
-			return [level, radius, damage, damage_per_tick]
+			damage_per_sec = desc.damage_per_sec(self, upgrade)
+			return [level, radius, damage, damage_per_sec]
 
 class Mortar(Classic):
 	name = "Mortier"
@@ -558,7 +558,7 @@ class Mortar(Classic):
 	ALLOWED_LEVEL = [1, 2, 4, 8, 15, 23, 38, 54, 72, 92, 116]
 	COST = [200,350,610,890,1440,2100,3500,5200,13000,28000,65000]
 	CAN_ATTACK = [Knight, Goblin, KingOfKnights, Giant, HealZone]
-	CLASSIC_RELOAD_SPEED = [360,340,320,300,300,270,240,220,200,180,180]
+	CLASSIC_RELOAD_SPEED = [0.9, 0.85, 0.8, 0.75, 0.75, 0.675, 0.6, 0.55, 0.5, 0.45, 0.45]
 	CLASSIC_DAMAGE = [200,240,270,300,340,380,440,510,640,700,900]
 	CLASSIC_RANGE = [4,4,4.5,4.5,4.5,5,5,5.5,5.5,6,6]
 	CLASSIC_EXPLOSION_RADIUS = [1.5,1.5,2,2,2.5,2.5,3,3,3.5,3.5,4]
@@ -570,18 +570,17 @@ class Mortar(Classic):
 		Tower.__init__(self, (x, y), lvl=level)
 
 	def on_update(mortar):
-		mortar.tick += 1
 		if mortar.is_loaded():
 			closer = Enemy.get_closer(Mortar.CAN_ATTACK, mortar.center, mortar.range)
 			if closer:
 				mortar.shot += 1
-				mortar.tick = 0
+				mortar.last_hit = time.time()
 				Enemy.zone_damage(Mortar.CAN_ATTACK, (closer.x, closer.y), mortar.explosion_radius, mortar.damage)
 	
 	@classmethod
 	def shop_item(cls, shop_width, item_height):
 		range = shop_desc.range(cls)
-		dpt = shop_desc.damage_per_tick(cls)
+		dpt = shop_desc.damage_per_sec(cls)
 		return Tower.setup_shop_item(cls, shop_width, item_height, [range, dpt])
 	
 	def description_texts(self, upgrade, boost):
@@ -592,8 +591,8 @@ class Mortar(Classic):
 			radius = desc.range(self, upgrade)
 			damage = desc.damage(self, upgrade)
 			explosion_radius = desc.explosion_radius(self, upgrade)
-			damage_per_tick = desc.damage_per_tick(self, upgrade)
-			return [level, radius, damage, explosion_radius, damage_per_tick]
+			damage_per_sec = desc.damage_per_sec(self, upgrade)
+			return [level, radius, damage, explosion_radius, damage_per_sec]
 
 
 class Wizard(Classic):
@@ -608,7 +607,7 @@ class Wizard(Classic):
 	ALLOWED_LEVEL = [1, 2, 4, 8, 15, 23, 38, 54, 72, 92, 116]
 	COST = [360,520,840,1440,2100,2900,4100,7500,12000,26000,55000]
 	CAN_ATTACK = [Knight, Goblin, Dragon, KingOfKnights, Giant, Healer, HealZone]
-	CLASSIC_RELOAD_SPEED = [360,340,320,300,280,240,240,210,190,190,180]
+	CLASSIC_RELOAD_SPEED = [0.9, 0.85, 0.8, 0.75, 0.7, 0.6, 0.6, 0.525, 0.475, 0.475, 0.45]
 	CLASSIC_DAMAGE = [200,220,250,280,310,350,410,490,570,680,800]
 	CLASSIC_RANGE = [3,3,3.5,3.5,4,4,4.5,4.5,5,5,5]
 
@@ -619,17 +618,16 @@ class Wizard(Classic):
 		Tower.__init__(self, (x, y), lvl=level)
 
 	def on_update(wizard):
-		wizard.tick += 1
 		if wizard.is_loaded():
 			at_least_one = Enemy.zone_damage(Wizard.CAN_ATTACK, wizard.center, wizard.range, wizard.damage)
 			if at_least_one:
 				wizard.shot+=1
-				wizard.tick = 0
+				wizard.last_hit = time.time()
 	
 	@classmethod
 	def shop_item(cls, shop_width, item_height):
 		range = shop_desc.range(cls)
-		dpt = shop_desc.damage_per_tick(cls)
+		dpt = shop_desc.damage_per_sec(cls)
 		return Tower.setup_shop_item(cls, shop_width, item_height, [range, dpt])
 
 	def description_texts(self, upgrade, boost):
@@ -639,8 +637,8 @@ class Wizard(Classic):
 		else:
 			radius = desc.range(self, upgrade)
 			damage = desc.damage(self, upgrade)
-			damage_per_tick = desc.damage_per_tick(self, upgrade)
-			return [level, radius, damage, damage_per_tick]
+			damage_per_sec = desc.damage_per_sec(self, upgrade)
+			return [level, radius, damage, damage_per_sec]
 
 
 class FireDiffuser(Classic):
@@ -656,10 +654,10 @@ class FireDiffuser(Classic):
 	ALLOWED_LEVEL = [1, 2, 4, 8, 15, 23, 38, 54, 72, 92, 116]
 	COST = [200,350,610,890,1440,2100,3500,5200,13000,28000,65000]
 	CAN_ATTACK = [Knight, Goblin, Dragon, KingOfKnights, Giant, Healer, HealZone]
-	CLASSIC_RELOAD_SPEED = [400,400,400,400,400,400,400,400,400,400,400]
+	CLASSIC_RELOAD_SPEED = [0.25, 0.25, 0.25, 0.25, 0.25, 0.25, 0.25, 0.25, 0.25, 0.25, 0.25]
 	EFFECT_LEVEL = [0,0,0,1,1,1,2,2,3,3,4]
 	CLASSIC_RANGE = [1,1,1.5,1.5,2,2,2,2.5,2.5,2.5,3]
-	CLASSIC_DURATION = [1200, 1500, 1800, 2100, 2400, 3000, 3600, 4500, 6000, 10500, 24000]
+	CLASSIC_DURATION = [3.0, 3.75, 4.5, 5.25, 6.0, 7.5, 9.0, 11.25, 15.0, 26.25, 60.0]
 
 	MAX_LEVEL = 10
 	SPLIT_LEVEL = -1
@@ -668,12 +666,11 @@ class FireDiffuser(Classic):
 		Tower.__init__(self, (x, y), lvl=level)
 
 	def on_update(fire_diffuser):
-		fire_diffuser.tick += 1
 		if fire_diffuser.is_loaded():
 			damaged = Enemy.get_all(FireDiffuser.CAN_ATTACK, fire_diffuser.center, fire_diffuser.range)
 			if damaged != []:
 				fire_diffuser.shot += 1
-				fire_diffuser.tick = 0
+				fire_diffuser.last_hit = time.time()
 			for enemy in damaged:
 				effect = Fire(enemy, FireDiffuser.EFFECT_LEVEL[fire_diffuser.lvl], FireDiffuser.CLASSIC_DURATION[fire_diffuser.lvl])
 				enemy.apply_effect(Fire, effect)
@@ -681,7 +678,7 @@ class FireDiffuser(Classic):
 	@classmethod
 	def shop_item(cls, shop_width, item_height):
 		duration = shop_desc.effect_duration(cls)
-		dpt = shop_desc.effect_damage_per_tick(cls)
+		dpt = shop_desc.effect_damage_per_sec(cls)
 		return Tower.setup_shop_item(cls, shop_width, item_height, [duration, dpt])
 	
 	def description_texts(self, upgrade, boost):
@@ -692,7 +689,7 @@ class FireDiffuser(Classic):
 			radius = desc.range(self, upgrade)
 			effect_level = desc.effect_level(self, upgrade)
 			duration = desc.effect_duration(self, upgrade)
-			dpt = desc.effect_damage_per_tick(self, upgrade)
+			dpt = desc.effect_damage_per_sec(self, upgrade)
 			return [level, radius, effect_level, duration, dpt]
 
 class PoisonDiffuser(Classic):
@@ -708,10 +705,10 @@ class PoisonDiffuser(Classic):
 	ALLOWED_LEVEL = [1, 2, 4, 8, 15, 23, 38, 54, 72, 92, 116]
 	COST = [200,350,610,890,1440,2100,3500,5200,13000,28000,65000]
 	CAN_ATTACK = [Knight, Goblin, Dragon, KingOfKnights, Giant, Healer, HealZone]
-	CLASSIC_RELOAD_SPEED = [400,400,400,400,400,400,400,400,400,400,400]
+	CLASSIC_RELOAD_SPEED = [0.25, 0.25, 0.25, 0.25, 0.25, 0.25, 0.25, 0.25, 0.25, 0.25, 0.25]
 	EFFECT_LEVEL = [0,0,0,1,1,1,2,2,3,3,4]
 	CLASSIC_RANGE = [1,1,1.5,1.5,2,2,2,2.5,2.5,2.5,3]
-	CLASSIC_DURATION = [4000, 5000, 6000, 7000, 8000, 10000, 12000, 15000, 20000, 35000, 80000]
+	CLASSIC_DURATION = [1.0, 1.25, 1.5, 1.75, 2.0, 2.5, 3.0, 3.75, 5.0, 8.75, 20.0]
 
 	MAX_LEVEL = 10
 	SPLIT_LEVEL = -1
@@ -720,12 +717,11 @@ class PoisonDiffuser(Classic):
 		Tower.__init__(self, (x, y), lvl=level)
 
 	def on_update(poison_diffuser):
-		poison_diffuser.tick += 1
 		if poison_diffuser.is_loaded():
 			damaged = Enemy.get_all(PoisonDiffuser.CAN_ATTACK, poison_diffuser.center, poison_diffuser.range)
 			if damaged != []:
 				poison_diffuser.shot += 1
-				poison_diffuser.tick = 0
+				poison_diffuser.last_hit = time.time()
 			for enemy in damaged:
 				effect = Poison(enemy, PoisonDiffuser.EFFECT_LEVEL[poison_diffuser.lvl], PoisonDiffuser.CLASSIC_DURATION[poison_diffuser.lvl])
 				enemy.apply_effect(Poison, effect)
@@ -733,7 +729,7 @@ class PoisonDiffuser(Classic):
 	@classmethod
 	def shop_item(cls, shop_width, item_height):
 		duration = shop_desc.effect_duration(cls)
-		dpt = shop_desc.effect_damage_per_tick(cls)
+		dpt = shop_desc.effect_damage_per_sec(cls)
 		return Tower.setup_shop_item(cls, shop_width, item_height, [duration, dpt])
 	
 	def description_texts(self, upgrade, boost):
@@ -744,7 +740,7 @@ class PoisonDiffuser(Classic):
 			radius = desc.range(self, upgrade)
 			effect_level = desc.effect_level(self, upgrade)
 			duration = desc.effect_duration(self, upgrade)
-			dpt = desc.effect_damage_per_tick(self, upgrade)
+			dpt = desc.effect_damage_per_sec(self, upgrade)
 			return [level, radius, effect_level, duration, dpt]
 
 
@@ -761,10 +757,10 @@ class SlownessDiffuser(Classic):
 	ALLOWED_LEVEL = [1, 2, 4, 8, 15, 23, 38, 54, 72, 92, 116]
 	COST = [200,350,610,890,1440,2100,3500,5200,13000,28000,65000]
 	CAN_ATTACK = [Knight, Goblin, Dragon, KingOfKnights, Giant, Healer, HealZone]
-	CLASSIC_RELOAD_SPEED = [200,200,200,200,200,200,200,200,200,200,200]
+	CLASSIC_RELOAD_SPEED = [0.25, 0.25, 0.25, 0.25, 0.25, 0.25, 0.25, 0.25, 0.25, 0.25, 0.25]
 	EFFECT_LEVEL = [0,0,0,1,1,1,2,2,3,3,4]
 	CLASSIC_RANGE = [1,1,1.5,1.5,2,2,2,2.5,2.5,2.5,3]
-	CLASSIC_DURATION = [400, 500, 600, 700, 800, 1000, 1200, 1500, 2000, 3500, 8000]
+	CLASSIC_DURATION = [1.0, 1.25, 1.5, 1.75, 2.0, 2.5, 3.0, 3.75, 5.0, 8.75, 20.0]
 
 	MAX_LEVEL = 10
 	SPLIT_LEVEL = -1
@@ -773,12 +769,11 @@ class SlownessDiffuser(Classic):
 		Tower.__init__(self, (x, y), lvl=level)
 
 	def on_update(slowness_diffuser):
-		slowness_diffuser.tick += 1
 		if slowness_diffuser.is_loaded():
 			damaged = Enemy.get_all(SlownessDiffuser.CAN_ATTACK, slowness_diffuser.center, slowness_diffuser.range)
 			if damaged != []:
 				slowness_diffuser.shot+=1
-				slowness_diffuser.tick = 0
+				slowness_diffuser.last_hit = time.time()
 			for enemy in damaged:
 				if hasattr(enemy, "v"):
 					effect = Slowness(enemy, SlownessDiffuser.EFFECT_LEVEL[slowness_diffuser.lvl], SlownessDiffuser.CLASSIC_DURATION[slowness_diffuser.lvl])
@@ -813,7 +808,7 @@ class Bank(Classic):
 	SIZE = 2
 	ALLOWED_LEVEL = [1, 2, 4, 8, 15, 23, 38, 54, 72, 92, 116]
 	COST = [800,1250,1840,2600,3500,5400,10500,21000,45000,110000,250000]
-	CLASSIC_RELOAD_SPEED = [3600,3400,3200,3000,3000,2700,2400,2200,2000,1800,1800]
+	CLASSIC_RELOAD_SPEED = [9.0, 8.5, 8.0, 7.5, 7.5, 6.75, 6.0, 5.5, 5.0, 4.5, 4.5]
 	EARNS = [20, 25, 33, 48, 64, 120, 240, 520, 1200, 2800, 6400]
 
 	MAX_LEVEL = 10
@@ -823,16 +818,15 @@ class Bank(Classic):
 		Tower.__init__(self, (x, y), lvl=level)
 
 	def on_update(bank):
-		bank.tick += 1
 		if bank.is_loaded():
 			Enemy.last_earned += bank.EARNS[bank.lvl]
-			bank.tick = 0
+			bank.last_hit = time.time()
 	
 	@classmethod
 	def shop_item(cls, shop_width, item_height):
 		earns = shop_desc.earn_per_action(cls)
-		earns_by_tick = shop_desc.earn_per_tick(cls)
-		return Tower.setup_shop_item(cls, shop_width, item_height, [earns, earns_by_tick])
+		earns_by_sec = shop_desc.earn_per_sec(cls)
+		return Tower.setup_shop_item(cls, shop_width, item_height, [earns, earns_by_sec])
 
 	def description_texts(self, upgrade, boost):
 		level = desc.level(self, upgrade)
@@ -840,9 +834,9 @@ class Bank(Classic):
 			return [level, desc("TODO", 0)]
 		else:
 			earns = desc.earn_per_action(self, upgrade)
-			earns_per_tick = desc.earn_per_tick(self, upgrade)
+			earns_per_sec = desc.earn_per_sec(self, upgrade)
 			duration = desc.reload_speed(self, upgrade)
-			return [level, earns, earns_per_tick, duration]
+			return [level, earns, earns_per_sec, duration]
 
 class DamageBooster(Booster):
 	name = "Boosteur de dégâts"

@@ -1,3 +1,5 @@
+import time
+
 class EnemyEffect:
 	
 	speed = 1
@@ -5,10 +7,11 @@ class EnemyEffect:
 	subclasses = []
 	
 	def __init__(self, enemy, level, duration):
-		self.tick = 0
 		self.target = enemy
 		self.level = level
 		self.duration = duration
+		self.creation = time.time()
+		self.last_hit = time.time()
 	
 	def update():
 		for cls in EnemyEffect.subclasses:
@@ -16,6 +19,9 @@ class EnemyEffect:
 	
 	def setup_subclasses():
 		EnemyEffect.subclasses = EnemyEffect.__subclasses__()
+	
+	def has_elapsed(self, last, duration):
+		return (time.time() - last) >= duration / EnemyEffect.speed
 	
 	def _delete(cls, self, active = True):
 		self.target.effects[cls.__name__] = None
@@ -25,10 +31,6 @@ class EnemyEffect:
 	
 	def change_speed(speed):
 		EnemyEffect.speed = speed
-		for cls in EnemyEffect.subclasses:
-			for effect in EnemyEffect.affected[cls.__name__]:
-				if hasattr(cls, "CLASSIC_RELOAD_SPEED"):
-					effect.reload_speed = cls.CLASSIC_RELOAD_SPEED[effect.level] / speed
 	
 	def clear():
 		for cls in EnemyEffect.subclasses:
@@ -37,28 +39,25 @@ class EnemyEffect:
 class Fire(EnemyEffect):
 	name = "Feu"
 	DAMAGES = [30,40,50,65,80]
-	CLASSIC_RELOAD_SPEED = [100,90,80,70,60]
+	CLASSIC_RELOAD_SPEED = [0.25, 0.225, 0.2, 0.175, 0.15]
 	
 	def __init__(self, enemy, level, duration):
 		EnemyEffect.__init__(self, enemy, level, duration)
-		self.reload_speed = Fire.CLASSIC_RELOAD_SPEED[level] / EnemyEffect.speed
 		self.damages = Fire.DAMAGES[level]
 		self.active = False
 	
 	def _update():
 		for effect in EnemyEffect.affected["Fire"]:
 			if effect.active:
-				effect.duration -= 1
-				effect.tick = min(effect.tick + 1, effect.reload_speed)
 				if effect.target.dead:
 					effect.delete()
-				elif effect.tick >= effect.reload_speed:
-					effect.tick = 0
+				elif effect.has_elapsed(effect.last_hit, Fire.CLASSIC_RELOAD_SPEED[effect.level]):
+					effect.last_hit = time.time()
 					if not effect.target.dead:
 						effect.target.get_damage(effect.damages)
 					else:
 						effect.delete()
-				elif effect.duration <= 0:
+				elif effect.has_elapsed(effect.creation, effect.duration):
 					effect.delete()
 	
 	def delete(self, active=True):
@@ -68,36 +67,34 @@ class Fire(EnemyEffect):
 class Poison(EnemyEffect):
 	name = "Poison"
 	DAMAGES = [100, 120, 140, 180, 250]
-	CLASSIC_RELOAD_SPEED = [300, 280, 250, 200, 150]
+	CLASSIC_RELOAD_SPEED = [0.75, 0.7, 0.625, 0.5, 0.375]
 	
 	def __init__(self, enemy, level, duration):
 		EnemyEffect.__init__(self, enemy, level, duration)
-		self.reload_speed = Poison.CLASSIC_RELOAD_SPEED[level] / EnemyEffect.speed
 		self.damages = Poison.DAMAGES[level]
 		self.active = False
 	
 	def _update():
 		for effect in EnemyEffect.affected["Poison"]:
 			if effect.active:
-				effect.duration -= 1
-				effect.tick = min(effect.tick + 1, effect.reload_speed)
 				if effect.target.dead:
 					effect.delete()
-				elif effect.tick >= effect.reload_speed:
-					effect.tick = 0
+				elif effect.has_elapsed(effect.last_hit, Poison.CLASSIC_RELOAD_SPEED[effect.level]):
+					effect.last_hit = time.time()
 					if not effect.target.dead:
 						effect.target.get_damage(effect.damages)
 					else:
 						effect.delete(all=True)
-				elif effect.duration <= 0:
+				elif effect.has_elapsed(effect.creation, effect.duration):
 					effect.delete()
 		
 	def delete(self, active=True):
 		EnemyEffect._delete(Poison, self, active)
 
+
 class Slowness(EnemyEffect):
 	name = "Lenteur"
-	SLOWING_RATE = [0.8,0.7,0.6,0.5,0.4]
+	SLOWING_RATE = [0.2, 0.175, 0.15, 0.125, 0.1]
 	
 	def __init__(self, enemy, level, duration):
 		EnemyEffect.__init__(self, enemy, level, duration)
@@ -107,10 +104,9 @@ class Slowness(EnemyEffect):
 	def _update():
 		for effect in EnemyEffect.affected["Slowness"]:
 			if effect.active:
-				effect.duration = effect.duration - EnemyEffect.speed
 				if effect.target.dead:
 					effect.delete()
-				elif effect.duration <= 0:
+				elif effect.has_elapsed(effect.creation, effect.duration):
 					effect.target.reset_enemy_speed()
 					effect.delete()
 	

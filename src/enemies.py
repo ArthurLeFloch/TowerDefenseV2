@@ -273,6 +273,9 @@ class Enemy:
 	def can_show_health(self):
 		return time.time()-self.last_hit < Enemy.SHOW_LIFE_TIME
 	
+	def has_elapsed(self, last, duration):
+		return (time.time() - last) >= duration / Enemy.speed
+	
 	def update_path_follower(SCREEN, cls, self, wave):
 		tile_size = Enemy.tile_size
 		if not self.has_reached_end:
@@ -495,21 +498,19 @@ class KingOfKnights(Enemy):
 	imrad = 0
 
 	COIN_VALUE = 300
-	SPAWNING_SPEED = [1000, 600]
+	SPAWNING_SPEED = [2.5, 1.5]
 	DEFAULT_SPEED = [.003, .006]
 	DEFAULT_HEALTH = [2000, 4000]
 	MAX_HEALTH = [2000, 4000]
 
 	def __init__(self, corrupted=0):
 		Enemy.__init__(self, corrupted=corrupted)
-		self.tick = 0
-		self.spawn_speed = KingOfKnights.SPAWNING_SPEED[corrupted] / Enemy.speed
+		self.last_spawned = time.time()
 	
 	def on_update(self):
-		if self.tick > self.spawn_speed:
+		if self.has_elapsed(self.last_spawned, KingOfKnights.SPAWNING_SPEED[self.corrupted]):
 			Knight(self.corrupted, pos=(self.x, self.y), start=self.start_index, current_on_path=self.current_on_path)
-			self.tick = 0
-		self.tick+=1
+			self.last_spawned = time.time()
 
 class Giant(Enemy):
 	follow_path = True
@@ -543,8 +544,8 @@ class Healer(Enemy):
 
 	COIN_VALUE = 100
 	CAN_HEAL = [Knight, Goblin, Dragon, KingOfKnights, Giant]
-	HEALING_SPEED = [200,100]
-	HEALING_AMOUNT = [120,200]
+	HEALING_SPEED = [0.5, 0.25]
+	HEALING_AMOUNT = [120, 200]
 	DEFAULT_SPEED = [.02, .04]
 	DEFAULT_HEALTH = [2000, 4000]
 	MAX_HEALTH = [2000, 4000]
@@ -552,20 +553,18 @@ class Healer(Enemy):
 	def __init__(self, corrupted=0):
 		Enemy.__init__(self, corrupted=corrupted)
 		self.vx, self.vy = _vect((self.x, self.y), Enemy.end)
-		self.tick = 0
-		self.heal_speed = Healer.HEALING_SPEED[corrupted] / Enemy.speed
+		self.last_heal = time.time()
 		self.focus = None
 
-	def _update(SCREEN, healer, *args):
-		healer.tick+=1
-		
+	def _update(SCREEN, healer, *args):		
 		if healer.focus:
 			if healer.focus.dead or _dist_2(healer.x,healer.y,healer.focus.x,healer.focus.y) > (10*Enemy.tile_size)**2:
 				healer.focus = Enemy.get_closer(Healer.CAN_HEAL,(healer.x,healer.y),10*Enemy.tile_size)
 			if healer.focus and _dist_2(healer.x,healer.y,healer.focus.x,healer.focus.y) < (4*Enemy.tile_size)**2:
-				if healer.tick > healer.heal_speed and not healer.focus.dead:
-					healer.focus.get_damage(-Healer.HEALING_AMOUNT[healer.corrupted])
-					healer.tick = 0
+				if not healer.focus.dead:
+					if healer.has_elapsed(healer.last_heal, Healer.HEALING_SPEED[healer.corrupted]):
+						healer.focus.get_damage(-Healer.HEALING_AMOUNT[healer.corrupted])
+						healer.last_heal = time.time()
 		else:
 			healer.focus = Enemy.get_closer(Healer.CAN_HEAL,(healer.x,healer.y),10*Enemy.tile_size)
 		
@@ -608,25 +607,22 @@ class HealZone(Enemy):
 	
 	COIN_VALUE = 200
 	CAN_HEAL = [Knight, Goblin, Dragon, KingOfKnights, Giant]
-	DEFAULT_RADIUS = [7,10]
-	HEALING_SPEED = [50,30]
-	HEALING_AMOUNT = [200,400]
+	DEFAULT_RADIUS = [7, 10]
+	HEALING_SPEED = [0.075, 0.125]
+	HEALING_AMOUNT = [200, 400]
 	DEFAULT_HEALTH = [20000, 40000]
 	MAX_HEALTH = [20000, 40000]
 
 	def __init__(self, corrupted=0, pos = None):
 		Enemy.__init__(self, pos=pos, corrupted=corrupted)
-		self.tick = 0
-		self.heal_speed = HealZone.HEALING_SPEED[corrupted] / Enemy.speed
+		self.last_heal = time.time()
 		self.radius = HealZone.DEFAULT_RADIUS[corrupted] * Enemy.tile_size
 
 	def _update(SCREEN, healzone, *args):
-		healzone.tick+=1
-		
-		if healzone.tick > healzone.heal_speed:
+		if healzone.has_elapsed(healzone.last_heal, HealZone.HEALING_SPEED[healzone.corrupted]):
 			at_least_one = Enemy.zone_damage(HealZone.CAN_HEAL, (healzone.x,healzone.y), healzone.radius, -HealZone.HEALING_AMOUNT[healzone.corrupted])
 			if at_least_one:
-				healzone.tick = 0
+				healzone.last_heal = time.time()
 		
 		rect = (healzone.x-healzone.radius, healzone.y-healzone.radius, HealZone.range_im[healzone.corrupted].get_size())
 		Enemy.new_rects.append(rect)

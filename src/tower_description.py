@@ -64,17 +64,17 @@ class InstanceDescription(TowerDescription):
 			is_boosted = (instance.damage_multiplier != 1)
 			return InstanceDescription(text, value, is_boosted=is_boosted)
 	
-	def damage_per_tick(instance, upgrade=False):
+	def damage_per_sec(instance, upgrade=False):
 		cls = instance.__class__
-		text = "Dégâts / tick"
+		text = "Dégâts / sec."
 
 		if upgrade and cls.CLASSIC_DAMAGE[instance.lvl] < cls.CLASSIC_DAMAGE[instance.lvl+1]:
-			value = round(cls.CLASSIC_DAMAGE[instance.lvl]/cls.CLASSIC_RELOAD_SPEED[instance.lvl], 2)
-			new_value = round(cls.CLASSIC_DAMAGE[instance.lvl+1]/cls.CLASSIC_RELOAD_SPEED[instance.lvl+1], 2)
+			value = round(cls.CLASSIC_DAMAGE[instance.lvl]/cls.CLASSIC_RELOAD_SPEED[instance.lvl])
+			new_value = round(cls.CLASSIC_DAMAGE[instance.lvl+1]/cls.CLASSIC_RELOAD_SPEED[instance.lvl+1])
 			return InstanceDescription(text, value, new_value=new_value)
 		else:
 			is_boosted = (instance.damage_multiplier != 1 or instance.speed_multiplier != 1)
-			value = round(instance.damage*instance.speed_multiplier/cls.CLASSIC_RELOAD_SPEED[instance.lvl], 2)
+			value = round(instance.damage*instance.speed_multiplier/cls.CLASSIC_RELOAD_SPEED[instance.lvl])
 			return InstanceDescription(text, value, is_boosted=is_boosted)
 	
 	def damage_multiplier(instance, upgrade=False):
@@ -161,16 +161,16 @@ class InstanceDescription(TowerDescription):
 			value = cls.effect.SLOWING_RATE[cls.EFFECT_LEVEL[instance.lvl]]
 			return InstanceDescription(text, value)
 	
-	def effect_damage_per_tick(instance, upgrade=False):
+	def effect_damage_per_sec(instance, upgrade=False):
 		cls = instance.__class__
-		text = "Dégâts / tick"
+		text = "Dégâts / sec."
 
 		if upgrade and cls.effect.DAMAGES[cls.EFFECT_LEVEL[instance.lvl]] != cls.effect.DAMAGES[cls.EFFECT_LEVEL[instance.lvl+1]]:
-			value = round(cls.effect.DAMAGES[cls.EFFECT_LEVEL[instance.lvl]]/cls.effect.CLASSIC_RELOAD_SPEED[cls.EFFECT_LEVEL[instance.lvl]], 2)
-			new_value = round(cls.effect.DAMAGES[cls.EFFECT_LEVEL[instance.lvl+1]]/cls.effect.CLASSIC_RELOAD_SPEED[cls.EFFECT_LEVEL[instance.lvl+1]], 2)
+			value = round(cls.effect.DAMAGES[cls.EFFECT_LEVEL[instance.lvl]]/cls.effect.CLASSIC_RELOAD_SPEED[cls.EFFECT_LEVEL[instance.lvl]])
+			new_value = round(cls.effect.DAMAGES[cls.EFFECT_LEVEL[instance.lvl+1]]/cls.effect.CLASSIC_RELOAD_SPEED[cls.EFFECT_LEVEL[instance.lvl+1]])
 			return InstanceDescription(text, value, new_value=new_value)
 		else:
-			value = round(cls.effect.DAMAGES[cls.EFFECT_LEVEL[instance.lvl]]/cls.effect.CLASSIC_RELOAD_SPEED[cls.EFFECT_LEVEL[instance.lvl]], 2)
+			value = round(cls.effect.DAMAGES[cls.EFFECT_LEVEL[instance.lvl]]/cls.effect.CLASSIC_RELOAD_SPEED[cls.EFFECT_LEVEL[instance.lvl]])
 			return InstanceDescription(text, value)
 	
 	def reload_speed(instance, upgrade=False):
@@ -183,7 +183,7 @@ class InstanceDescription(TowerDescription):
 			return InstanceDescription(text, value, new_value=new_value)
 		else:
 			is_boosted = instance.speed_multiplier != 1
-			value = round(cls.CLASSIC_RELOAD_SPEED[instance.lvl]/instance.speed_multiplier)
+			value = round(cls.CLASSIC_RELOAD_SPEED[instance.lvl]/instance.speed_multiplier, 2)
 			return InstanceDescription(text, value, is_boosted=is_boosted)
 	
 	def earn_per_action(instance, upgrade=False):
@@ -198,17 +198,17 @@ class InstanceDescription(TowerDescription):
 			value = cls.EARNS[instance.lvl]
 			return InstanceDescription(text, value)
 	
-	def earn_per_tick(instance, upgrade=False):
+	def earn_per_sec(instance, upgrade=False):
 		cls = instance.__class__
-		text = "$ / tick"
+		text = "$ / sec."
 
 		if upgrade and (cls.EARNS[instance.lvl] != cls.EARNS[instance.lvl+1] or cls.CLASSIC_RELOAD_SPEED[instance.lvl] != cls.CLASSIC_RELOAD_SPEED[instance.lvl+1]):
-			value = round(cls.EARNS[instance.lvl]/cls.CLASSIC_RELOAD_SPEED[instance.lvl],4)
-			new_value = round(cls.EARNS[instance.lvl+1]/cls.CLASSIC_RELOAD_SPEED[instance.lvl+1],4)
+			value = round(cls.EARNS[instance.lvl]/cls.CLASSIC_RELOAD_SPEED[instance.lvl], 2)
+			new_value = round(cls.EARNS[instance.lvl+1]/cls.CLASSIC_RELOAD_SPEED[instance.lvl+1], 2)
 			return InstanceDescription(text, value, new_value=new_value)
 		else:
 			is_boosted = instance.speed_multiplier != 1
-			value = round(cls.EARNS[instance.lvl]*instance.speed_multiplier/cls.CLASSIC_RELOAD_SPEED[instance.lvl],4)
+			value = round(cls.EARNS[instance.lvl]*instance.speed_multiplier/cls.CLASSIC_RELOAD_SPEED[instance.lvl], 2)
 			return InstanceDescription(text, value, is_boosted=is_boosted)
 	
 	def gold_touch(instance, upgrade=False):
@@ -237,9 +237,9 @@ class ShopDescription(TowerDescription):
 		value = cls.CLASSIC_DAMAGE[0]
 		return ShopDescription(text, value)
 	
-	def damage_per_tick(cls):
-		text = "Dégâts / tick"
-		value = round(cls.CLASSIC_DAMAGE[0]/cls.CLASSIC_RELOAD_SPEED[0], 2)
+	def damage_per_sec(cls):
+		text = "Dégâts / sec."
+		value = round(cls.CLASSIC_DAMAGE[0]/cls.CLASSIC_RELOAD_SPEED[0])
 		return ShopDescription(text, value)
 	
 	def damage_multiplier(cls):
@@ -272,9 +272,9 @@ class ShopDescription(TowerDescription):
 		value = cls.CLASSIC_DURATION[0]
 		return ShopDescription(text, value)
 	
-	def effect_damage_per_tick(cls):
-		text = "Dégâts / tick"
-		value = round(cls.effect.DAMAGES[cls.EFFECT_LEVEL[0]]/cls.CLASSIC_RELOAD_SPEED[cls.EFFECT_LEVEL[0]], 2)
+	def effect_damage_per_sec(cls):
+		text = "Dégâts / sec."
+		value = round(cls.effect.DAMAGES[cls.EFFECT_LEVEL[0]]/cls.CLASSIC_RELOAD_SPEED[cls.EFFECT_LEVEL[0]])
 		return ShopDescription(text, value)
 	
 	def slowness_factor(cls):
@@ -292,7 +292,7 @@ class ShopDescription(TowerDescription):
 		value = cls.EARNS[0]
 		return ShopDescription(text, value)
 	
-	def earn_per_tick(cls):
-		text = "$ / tick"
-		value = round(cls.EARNS[0]/cls.CLASSIC_RELOAD_SPEED[0],4)
+	def earn_per_sec(cls):
+		text = "$ / sec."
+		value = round(cls.EARNS[0]/cls.CLASSIC_RELOAD_SPEED[0], 2)
 		return ShopDescription(text, value)
