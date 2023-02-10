@@ -186,6 +186,16 @@ class Enemy:
 		pygame.draw.circle(tmp2, (255, 100, 150, 15), (tmp, tmp), tmp)
 		pygame.draw.circle(tmp2, (150, 0, 50, 50), (tmp, tmp), tmp, width=5)
 		HealZone.range_im[1] = tmp2
+	
+	def update_health(lvl, difficulty):
+		for cls in Enemy.subclasses:
+			new_health = int(cls.DEFAULT_HEALTH[0] + (lvl - 1) * difficulty * cls.DEFAULT_HEALTH[0] / 3)
+			cls.MAX_HEALTH = [new_health, 2 * new_health]
+	
+	def print_health_update():
+		printf("Updated enemies stats :")
+		for cls in Enemy.subclasses:
+			printf(f'{cls.__name__} :\t{cls.MAX_HEALTH}')
 
 	def update(SCREEN, wave):
 		Enemy.last_rects = Enemy.new_rects.copy()
