@@ -166,7 +166,6 @@ to_shop_height = to_change_speed_height + 42 + 5
 shop_height = HEIGHT-to_shop_height-8
 
 time_stamp = time.time()
-TICK = 0
 
 # endregion
 
@@ -491,8 +490,14 @@ def remove_info_bubble():
 
 	ImageButton.delete('confirm', 'cancel')
 
+def has_elapsed(last, duration):
+	t = time.time()
+	return (t - last) >= duration / settings['speed']
+
 info_bubble = None
 info_rect = None
+
+last_spawn = 0
 
 last_rects, new_rects = [], []
 
@@ -531,6 +536,7 @@ while execute:
 			pygame.display.update()
 			new_game(n, m, rdi(1,3))
 			nav_menu_to_game()
+			last_spawn = time.time()
 		elif Button.clicked('browse_maps'):
 			pass
 		elif Button.clicked('settings'):
@@ -547,16 +553,15 @@ while execute:
 		Button.update(SCREEN, x, y, current_click_state, clicked_up)
 		
 	elif current_menu == "game":
-		TICK += settings['speed']
 		xc, yc = int((x-game._xoffset)/tile_size), int((y-game._yoffset)/tile_size)
 		
 		if Enemy.amount == 0 and game.wave.length == 0:
 			# ? Timer before launching an other wave
-			TICK = 0
+			last_spawn = time.time()
 			game.new_wave()
 
-		if TICK > 500 and game.wave.length > 0 and settings['wave_enabled']:
-			TICK = 0
+		if has_elapsed(last_spawn, Wave.PAUSE) and game.wave.length > 0 and settings['wave_enabled']:
+			last_spawn = time.time()
 			cls, corrupted = game.wave.wave[0]
 			cls(corrupted)
 			game.wave.wave.pop(0)

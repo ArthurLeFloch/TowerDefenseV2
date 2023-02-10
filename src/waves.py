@@ -8,6 +8,8 @@ def printf(args):
 
 class Wave:
 	currentLevel = 0
+
+	PAUSE = 1.0
 	
 	def __init__(self, difficulty=1):
 		Wave.currentLevel += 1
