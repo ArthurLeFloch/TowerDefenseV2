@@ -46,6 +46,9 @@ class Enemy:
 	yoffset = 0
 	tile_size = None
 
+	time_since_last_update = 0.0
+	last_update = 0.0
+
 	new_rects = []
 	last_rects = []
 
@@ -89,8 +92,7 @@ class Enemy:
 		self.health_bar_size = None
 
 		if cls.follow_path:
-			self.v = None
-			self.vx,self.vy = 0,0
+			self.vx,self.vy = 0, 0
 			xp, yp = 0,0
 			if not current_on_path:
 				xp, yp = Enemy.paths[self.start_index][1]
@@ -104,9 +106,6 @@ class Enemy:
 				self.current_on_path = current_on_path
 			else:
 				self.current_on_path = 0
-		
-		if not cls.static:
-			self.v = cls.DEFAULT_SPEED[corrupted] * Enemy.tile_size * Enemy.speed
 		
 		self.effects = {'Fire':None, 'Poison':None, 'Slowness':None}
 		self.last_hit = 10
@@ -138,6 +137,9 @@ class Enemy:
 		Enemy.lengths = game.lengths.copy()
 		Enemy.xoffset = game._xoffset
 		Enemy.yoffset = game._yoffset
+
+		Enemy.time_since_last_update = 1
+		Enemy.last_update = time.time()
 		
 		for cls in Enemy.subclasses:
 			cls.MAX_HEALTH = cls.DEFAULT_HEALTH.copy()
@@ -188,15 +190,17 @@ class Enemy:
 		HealZone.range_im[1] = tmp2
 
 	def update(SCREEN, wave):
+		Enemy.time_since_last_update = time.time() - Enemy.last_update
 		Enemy.last_rects = Enemy.new_rects.copy()
 		Enemy.new_rects = []
 		for cls in Enemy.subclasses:
 			if cls.follow_path:
-				for enemy in Enemy.dict[cls.__name__]:
+				for enemy in Enemy.dict[cls.__name__][::-1]:
 					Enemy.update_path_follower(SCREEN, cls, enemy, wave)
 			else:
-				for enemy in Enemy.dict[cls.__name__]:
+				for enemy in Enemy.dict[cls.__name__][::-1]:
 					cls._update(SCREEN, enemy, wave)
+		Enemy.last_update = time.time()
 
 	def change_path(wave, paths, lengths):
 		Enemy.paths = paths.copy()
@@ -237,9 +241,6 @@ class Enemy:
 		Enemy.speed = speed
 		for cls in Enemy.subclasses:
 			for enemy in Enemy.dict[cls.__name__]:
-				if hasattr(enemy, 'v'):
-					factor = enemy.effects['Slowness'].slowing_rate if enemy.effects['Slowness'] else 1
-					enemy.v = cls.DEFAULT_SPEED[enemy.corrupted] * Enemy.tile_size * speed * factor
 				if hasattr(enemy, 'heal_speed'):
 					enemy.heal_speed = cls.HEALING_SPEED[enemy.corrupted] / speed
 				if hasattr(enemy, 'spawn_speed'):
@@ -272,6 +273,13 @@ class Enemy:
 	@property
 	def can_show_health(self):
 		return time.time()-self.last_hit < Enemy.SHOW_LIFE_TIME
+	
+	@property
+	def v(self):
+		result = self.__class__.DEFAULT_SPEED[self.corrupted] * Enemy.tile_size * Enemy.speed * Enemy.time_since_last_update
+		if self.effects['Slowness']:
+			result *= self.effects['Slowness'].slowing_rate
+		return result
 	
 	def has_elapsed(self, last, duration):
 		return (time.time() - last) >= duration / Enemy.speed
@@ -351,29 +359,23 @@ class Enemy:
 			if hasattr(effect, "damages"):
 				if effect.damages > effect2.damages or ((effect.damages == effect2.damages) and effect.duration > effect2.duration):
 					effect2.delete()
+					effect.active = True
 					self.effects[cls.__name__] = effect
 					EnemyEffect.affected[cls.__name__].append(effect)
-					effect.active = True
 				else:
-					effect.delete(active = False)
+					effect.delete()
 			elif hasattr(effect, "slowing_rate"):
-				if effect.slowing_rate > effect2.slowing_rate or ((effect.slowing_rate == effect2.slowing_rate) and effect.duration > effect2.duration):
-					self.reset_enemy_speed()
-					self.v *= effect.slowing_rate
+				if effect.slowing_rate < effect2.slowing_rate or ((effect.slowing_rate == effect2.slowing_rate) and effect.duration > effect2.duration):
 					effect2.delete()
+					effect.active = True
 					self.effects[cls.__name__] = effect
 					EnemyEffect.affected[cls.__name__].append(effect)
-					effect.active = True
 				else:
-					effect.delete(active = False)
+					effect.delete()
 		else:
+			effect.active = True
 			self.effects[cls.__name__] = effect
 			EnemyEffect.affected[cls.__name__].append(effect)
-			effect.active = True
-	
-	def reset_enemy_speed(self):
-		cls = self.__class__
-		self.v = cls.DEFAULT_SPEED[self.corrupted] * Enemy.tile_size * Enemy.speed
 	
 	def move(self):
 		previous_chunk_pos = Chunk.coords_to_chunk(self.x, self.y, Enemy.xoffset, Enemy.yoffset, Enemy.tile_size)
@@ -417,7 +419,6 @@ class Enemy:
 class Knight(Enemy):
 	follow_path = True
 	flying = False
-	static = False
 
 	amount = 0
 	corrupted = 0
@@ -427,7 +428,7 @@ class Knight(Enemy):
 
 	COIN_VALUE = 8
 	DEFAULT_HEALTH = [200, 400]
-	DEFAULT_SPEED = [.005, .01]
+	DEFAULT_SPEED = [1.0, 2.0]
 	MAX_HEALTH = [200, 400]
 
 	def __init__(self, corrupted=0, pos=None, start=None, current_on_path=None):
@@ -436,7 +437,6 @@ class Knight(Enemy):
 class Goblin(Enemy):
 	follow_path = True
 	flying = False
-	static = False
 
 	amount = 0
 	corrupted = 0
@@ -445,7 +445,7 @@ class Goblin(Enemy):
 	imrad = 0
 
 	COIN_VALUE = 14
-	DEFAULT_SPEED = [.008, .016]
+	DEFAULT_SPEED = [1.4, 2.8]
 	DEFAULT_HEALTH = [100, 200]
 	MAX_HEALTH = [100, 200]
 
@@ -455,7 +455,6 @@ class Goblin(Enemy):
 class Dragon(Enemy):
 	follow_path = False
 	flying = True
-	static = False
 
 	amount = 0
 	corrupted = 0
@@ -464,7 +463,7 @@ class Dragon(Enemy):
 	imrad = 0
 	
 	COIN_VALUE = 40
-	DEFAULT_SPEED = [.015, .030]
+	DEFAULT_SPEED = [1.2, 2.4]
 	DEFAULT_HEALTH = [300, 600]
 	MAX_HEALTH = [300, 600]
 
@@ -489,7 +488,6 @@ class Dragon(Enemy):
 class KingOfKnights(Enemy):
 	follow_path = True
 	flying = False
-	static = False
 
 	amount = 0
 	corrupted = 0
@@ -499,7 +497,7 @@ class KingOfKnights(Enemy):
 
 	COIN_VALUE = 300
 	SPAWNING_SPEED = [2.5, 1.5]
-	DEFAULT_SPEED = [.003, .006]
+	DEFAULT_SPEED = [0.7, 1.4]
 	DEFAULT_HEALTH = [2000, 4000]
 	MAX_HEALTH = [2000, 4000]
 
@@ -515,7 +513,6 @@ class KingOfKnights(Enemy):
 class Giant(Enemy):
 	follow_path = True
 	flying = False
-	static = False
 
 	amount = 0
 	corrupted = 0
@@ -524,7 +521,7 @@ class Giant(Enemy):
 	imrad = 0
 
 	COIN_VALUE = 1000
-	DEFAULT_SPEED = [.002, .004]
+	DEFAULT_SPEED = [0.5, 1.0]
 	DEFAULT_HEALTH = [8000, 16000]
 	MAX_HEALTH = [8000, 16000]
 
@@ -534,7 +531,6 @@ class Giant(Enemy):
 class Healer(Enemy):
 	follow_path = False
 	flying = True
-	static = False
 
 	amount = 0
 	corrupted = 0
@@ -546,7 +542,7 @@ class Healer(Enemy):
 	CAN_HEAL = [Knight, Goblin, Dragon, KingOfKnights, Giant]
 	HEALING_SPEED = [0.5, 0.25]
 	HEALING_AMOUNT = [120, 200]
-	DEFAULT_SPEED = [.02, .04]
+	DEFAULT_SPEED = [1.6, 3.2]
 	DEFAULT_HEALTH = [2000, 4000]
 	MAX_HEALTH = [2000, 4000]
 
@@ -596,7 +592,6 @@ class Healer(Enemy):
 class HealZone(Enemy):
 	follow_path = False
 	flying = False
-	static = True
 
 	amount = 0
 	corrupted = 0

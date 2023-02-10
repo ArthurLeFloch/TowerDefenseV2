@@ -416,7 +416,7 @@ def nav_menu_to_game():
 	ImageButton.unlock('speed_down')
 	if settings['speed'] == 1:
 		ImageButton.lock('speed_down')
-	if settings['speed'] == 10:
+	if settings['speed'] == 5:
 		ImageButton.lock('speed_up')
 	Button.delete("new_map", "browse_maps", "settings")
 
@@ -435,7 +435,7 @@ def change_speed(speed):
 	ImageButton.unlock('speed_down')
 	if settings['speed'] == 1:
 		ImageButton.lock('speed_down')
-	if settings['speed'] == 10:
+	if settings['speed'] == 5:
 		ImageButton.lock('speed_up')
 	game.set_speed(settings['speed'])
 
@@ -734,7 +734,7 @@ while execute:
 					game.get_damage(-1)
 
 				if event.key == K_f:
-					printf(f"FPS cap toggled from {FPS} to {FPS+30 if FPS+30<=300 else 'MAX'}")
+					printf(f"FPS cap toggled from {FPS if FPS != 0 else 'MAX'} to {FPS+30 if FPS+30<=300 else 'MAX'}")
 					FPS += 30
 					if FPS > 300:
 						FPS = 0
@@ -835,9 +835,9 @@ while execute:
 		Enemy.last_lost_life = 0
 
 		if ImageButton.ex_and_clicked('speed_up'):
-			if settings['speed'] < 10:
+			if settings['speed'] < 5:
 				change_speed(settings['speed']+1)
-			if settings["speed"] == 10:
+			if settings["speed"] == 5:
 				ImageButton.lock('speed_up')
 			ImageButton.unlock('speed_down')
 		

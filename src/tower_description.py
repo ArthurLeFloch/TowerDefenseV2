@@ -141,12 +141,12 @@ class InstanceDescription(TowerDescription):
 		cls = instance.__class__
 		text = "Durée"
 
-		if upgrade and cls.CLASSIC_DURATION[cls.EFFECT_LEVEL[instance.lvl]] != cls.CLASSIC_DURATION[cls.EFFECT_LEVEL[instance.lvl+1]]:
-			value = cls.CLASSIC_DURATION[cls.EFFECT_LEVEL[instance.lvl]]
-			new_value = cls.CLASSIC_DURATION[cls.EFFECT_LEVEL[instance.lvl+1]]
+		if upgrade and cls.CLASSIC_DURATION[instance.lvl] != cls.CLASSIC_DURATION[instance.lvl+1]:
+			value = cls.CLASSIC_DURATION[instance.lvl]
+			new_value = cls.CLASSIC_DURATION[instance.lvl+1]
 			return InstanceDescription(text, value, new_value=new_value)
 		else:
-			value = cls.CLASSIC_DURATION[cls.EFFECT_LEVEL[instance.lvl]]
+			value = cls.CLASSIC_DURATION[instance.lvl]
 			return InstanceDescription(text, value)
 	
 	def slowness_factor(instance, upgrade=False):
