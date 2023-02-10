@@ -35,12 +35,17 @@ class Wave:
 			wave.append([Goblin, 0])
 		for _ in range(d):
 			wave.append([Dragon, 0])
+		
 		if lvl%10==5:
 			for _ in range(tmp-1):
 				wave.insert(rdi(0, len(wave)-1), [KingOfKnights, 0])
 		elif lvl%10==0:
 			for _ in range(tmp-1):
 				wave.insert(rdi(0, len(wave)-1), [Giant, 0])
+		
+		if lvl > 10 and rdi(0, 3) == 0:
+			for _ in range(rdi(1, 3)):
+				wave.insert(rdi(0, len(wave)-1), [Healer, 0])
 		
 		Enemy.print_health_update()
 		printf(f"New wave length : \t{len(wave)}")
@@ -51,17 +56,16 @@ if __name__ == '__main__':
 	max_wave = 1000
 	#test Knights
 	results = []
-	Wave.setup([])
 	for w in range(max_wave):
 		current_wave = Wave().wave
 		s=0
 		for x in current_wave:
-			if x[0] == Knight:
+			if x[0] == Healer:
 				s+=1
 		results.append(s)
 	x = [k for k in range(max_wave)]
 	plt.plot(x, results)
-	plt.title("Nombre de 'Knights' par vagues")
+	plt.title("Nombre de 'Healer' par vagues")
 	plt.grid()
 	plt.show()
 
