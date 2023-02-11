@@ -610,8 +610,7 @@ while execute:
 							remove_info_bubble()
 							setup_upgrade_buttons(selected_tower)
 					elif x > Menu.SHOP_POS[0]:
-						game.selected_tiles = []
-						game.selection_type = None
+						remove_info_bubble()
 						if not selected_tower:
 							if drag_n_dropping:
 								drag_n_dropping = None
