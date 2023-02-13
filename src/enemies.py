@@ -506,7 +506,7 @@ class KingOfKnights(Enemy):
 	imrad = 0
 
 	COIN_VALUE = 300
-	SPAWNING_SPEED = [2.5, 1.5]
+	SPAWNING_SPEED = [5, 3.5]
 	DEFAULT_SPEED = [0.7, 1.4]
 	DEFAULT_HEALTH = [2000, 4000]
 	MAX_HEALTH = [2000, 4000]

@@ -32,7 +32,7 @@ class Wave:
 			d = int(5*rdi(1,1 + (lvl%5))*tmp*difficulty)
 		
 		for _ in range(k):
-			wave.append([Knight,0])
+			wave.append([Knight, 0])
 		for _ in range(g):
 			wave.append([Goblin, 0])
 		for _ in range(d):

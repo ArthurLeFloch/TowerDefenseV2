@@ -593,7 +593,7 @@ while execute:
 					if x < to_right:
 						if info_bubble and not is_on_rect((x, y), info_rect):
 							remove_info_bubble()
-						else:
+						elif not info_bubble:
 							if 0 <= xc < n and 0 <= yc < m:
 								if game.trees[xc, yc] != 0:
 									game.selected_tiles = [(xc, yc)]
