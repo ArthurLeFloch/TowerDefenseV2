@@ -57,6 +57,14 @@ colors = {'background': (10, 14, 18),
 					'Pcenter': (106, 152, 163),
 					'Pborder': (100, 70, 80)}]}
 
+def is_neighbor(x, y, i, j):
+	a = abs(x - i)
+	b = abs(y - j)
+	if a > 1 or b > 1:
+		return False
+	return a != b
+	
+
 class Game:
 	DEFAULT_COST_NEW_TILE = 100
 	TILE_PRICE_INCREASE = 50
@@ -295,6 +303,12 @@ class Game:
 			return True
 		elif j-1 >= 0 and self.array[i][j-1] != 0:
 			return True
+		return False
+	
+	def has_selected_neighbor_tile(self, i, j):
+		for (x, y) in self.selected_tiles:
+			if is_neighbor(x, y, i, j):
+				return True
 		return False
 	
 	def add_tile(self, xc, yc):

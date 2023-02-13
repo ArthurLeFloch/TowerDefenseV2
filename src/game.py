@@ -572,7 +572,7 @@ while execute:
 			if game.selection_type == 'tree':
 				allowed = (game.trees[xc, yc] > 0)
 			elif game.selection_type == 'tile':
-				allowed = (game.array[xc, yc] == 0 and game.has_neighbor_tile(xc, yc))
+				allowed = (game.array[xc, yc] == 0 and (game.has_selected_neighbor_tile(xc, yc) or game.has_neighbor_tile(xc, yc)))
 			else:
 				if game.trees[xc, yc] > 0:
 					game.selection_type = 'tree'
