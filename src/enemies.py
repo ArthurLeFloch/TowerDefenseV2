@@ -68,6 +68,8 @@ class Enemy:
 	last_lost_life = 0
 	SHOW_LIFE_TIME = 5
 	
+	path_followers = []
+	others = []
 	subclasses = []
 	dict = {}
 
@@ -207,12 +209,20 @@ class Enemy:
 		Enemy.last_rects = Enemy.new_rects.copy()
 		Enemy.new_rects = []
 		for cls in Enemy.subclasses:
-			if cls.follow_path:
-				for enemy in Enemy.dict[cls.__name__][::-1]:
-					Enemy.update_path_follower(SCREEN, cls, enemy, wave)
-			else:
-				for enemy in Enemy.dict[cls.__name__][::-1]:
-					cls._update(SCREEN, enemy, wave)
+			for enemy in Enemy.dict[cls.__name__][::-1]:
+				enemy.display(SCREEN)
+				if enemy.can_show_health:
+					enemy.show_health(SCREEN)
+				if hasattr(enemy, "on_display"):
+					enemy.on_display(SCREEN)
+				
+				if hasattr(enemy, "on_update"):
+					enemy.on_update()
+				
+				if cls.follow_path:
+					Enemy.update_path_follower(SCREEN, enemy, wave)
+				else:
+					enemy.custom_update()
 		Enemy.last_update = time.time()
 
 	def change_path(wave, paths, lengths):
@@ -294,7 +304,8 @@ class Enemy:
 			result *= self.effects['Slowness'].slowing_rate
 		return result
 	
-	def update_path_follower(SCREEN, cls, self, wave):
+	def update_path_follower(SCREEN, self, wave):
+		cls = self.__class__
 		tile_size = Enemy.tile_size
 		if not self.has_reached_end:
 			if hasattr(self, "on_update"):
@@ -310,9 +321,6 @@ class Enemy:
 				else:
 					self.current_on_path += 1
 				self.move()
-				self.display(SCREEN)
-				if self.can_show_health:
-					self.show_health(SCREEN)
 			else:  # ? Enemy out of paths
 				self.die(earn=False)
 				wave.wave.append([cls, 1])
@@ -483,18 +491,15 @@ class Dragon(Enemy):
 	def __init__(self, corrupted=0):
 		Enemy.__init__(self, corrupted=corrupted)
 
-	def _update(SCREEN, dragon, *args):
+	def custom_update(self, SCREEN):
 		xb, yb = Enemy.end
-		if abs(xb-dragon.x) + abs(yb-dragon.y) > dragon.v:
-			dragon.vx, dragon.vy = _vect((dragon.x, dragon.y), Enemy.end)
-			dragon.vx *= dragon.v
-			dragon.vy *= dragon.v
-			dragon.move()
-			dragon.display(SCREEN)
-			if time.time()-dragon.last_hit < Enemy.SHOW_LIFE_TIME:
-				dragon.show_health(SCREEN)
+		if abs(xb-self.x) + abs(yb-self.y) > self.v:
+			self.vx, self.vy = _vect((self.x, self.y), Enemy.end)
+			self.vx *= self.v
+			self.vy *= self.v
+			self.move()
 		else:  # ? A Dragon has reached the end
-			dragon.die(earn=False)
+			self.die(earn=False)
 			Enemy.last_lost_life += 1
 
 
@@ -565,38 +570,34 @@ class Healer(Enemy):
 		self.is_loaded = Timer(Healer.HEALING_SPEED[corrupted])
 		self.focus = None
 
-	def _update(SCREEN, healer, *args):		
-		if healer.focus:
-			if healer.focus.dead or _dist_2(healer.x,healer.y,healer.focus.x,healer.focus.y) > (10*Enemy.tile_size)**2:
-				healer.focus = Enemy.get_closer(Healer.CAN_HEAL,(healer.x,healer.y),10*Enemy.tile_size)
-			if healer.focus and _dist_2(healer.x,healer.y,healer.focus.x,healer.focus.y) < (4*Enemy.tile_size)**2:
-				if not healer.focus.dead and healer.is_loaded:
-					healer.focus.get_damage(-Healer.HEALING_AMOUNT[healer.corrupted])
-					healer.is_loaded.reset()
+	def custom_update(self):		
+		if self.focus:
+			if self.focus.dead or _dist_2(self.x,self.y,self.focus.x,self.focus.y) > (10*Enemy.tile_size)**2:
+				self.focus = Enemy.get_closer(self.CAN_HEAL,(self.x,self.y),10*Enemy.tile_size)
+			if self.focus and _dist_2(self.x,self.y,self.focus.x,self.focus.y) < (4*Enemy.tile_size)**2:
+				if not self.focus.dead and self.is_loaded:
+					self.focus.get_damage(-Healer.HEALING_AMOUNT[self.corrupted])
+					self.is_loaded.reset()
 		else:
-			healer.focus = Enemy.get_closer(Healer.CAN_HEAL,(healer.x,healer.y),10*Enemy.tile_size)
+			self.focus = Enemy.get_closer(Healer.CAN_HEAL,(self.x,self.y),10*Enemy.tile_size)
 		
-		if healer.focus and _dist_2(healer.x,healer.y,healer.focus.x,healer.focus.y) > (2*Enemy.tile_size)**2:
-			healer.vx, healer.vy = _vect((healer.x, healer.y), (healer.focus.x, healer.focus.y))
-			healer.vx *= healer.v
-			healer.vy *= healer.v
-			healer.move()
-		elif (not healer.focus) or (healer.focus and healer.focus.dead):
-			healer.vx, healer.vy = _vect((healer.x, healer.y), Enemy.end)
-			healer.vx *= healer.v
-			healer.vy *= healer.v
-			healer.move()
-		if healer.focus and healer.focus.dead:
-			healer.focus = None
+		if self.focus and _dist_2(self.x,self.y,self.focus.x,self.focus.y) > (2*Enemy.tile_size)**2:
+			self.vx, self.vy = _vect((self.x, self.y), (self.focus.x, self.focus.y))
+			self.vx *= self.v
+			self.vy *= self.v
+			self.move()
+		elif (not self.focus) or (self.focus and self.focus.dead):
+			self.vx, self.vy = _vect((self.x, self.y), Enemy.end)
+			self.vx *= self.v
+			self.vy *= self.v
+			self.move()
+		if self.focus and self.focus.dead:
+			self.focus = None
 		
 		xb,yb = Enemy.end
-		if abs(xb-healer.x) + abs(yb-healer.y) < healer.v:
-			healer.die(earn=False)
+		if abs(xb-self.x) + abs(yb-self.y) < self.v:
+			self.die(earn=False)
 			Enemy.last_lost_life += 1
-		else:
-			healer.display(SCREEN)
-			if time.time()-healer.last_hit < Enemy.SHOW_LIFE_TIME:
-				healer.show_health(SCREEN)
 	
 	def on_death(self):
 		HealZone(pos=(self.x,self.y))
@@ -619,25 +620,26 @@ class HealZone(Enemy):
 	HEALING_AMOUNT = [200, 400]
 	DEFAULT_HEALTH = [20000, 40000]
 	MAX_HEALTH = [20000, 40000]
+	MAX_DURATION = [7, 10]
 
-	def __init__(self, corrupted=0, pos = None):
+	def __init__(self, corrupted=0, pos=None):
 		Enemy.__init__(self, pos=pos, corrupted=corrupted)
 		self.is_loaded = Timer(HealZone.HEALING_SPEED[corrupted])
+		self.is_loaded2 = Timer(1)
 		self.radius = HealZone.DEFAULT_RADIUS[corrupted] * Enemy.tile_size
 
-	def _update(SCREEN, healzone, *args):
-		if healzone.is_loaded:
-			at_least_one = Enemy.zone_damage(HealZone.CAN_HEAL, (healzone.x,healzone.y), healzone.radius, -HealZone.HEALING_AMOUNT[healzone.corrupted])
+	def custom_update(self):
+		if self.is_loaded:
+			at_least_one = Enemy.zone_damage(HealZone.CAN_HEAL, (self.x,self.y), self.radius, -HealZone.HEALING_AMOUNT[self.corrupted])
 			if at_least_one:
-				healzone.is_loaded.reset()
-		
-		rect = (healzone.x-healzone.radius, healzone.y-healzone.radius, HealZone.range_im[healzone.corrupted].get_size())
-		Enemy.new_rects.append(rect)
-		SCREEN.blit(HealZone.range_im[healzone.corrupted], (rect[0], rect[1]))
-		healzone.display(SCREEN)
-		if time.time()-healzone.last_hit < Enemy.SHOW_LIFE_TIME:
-			healzone.show_health(SCREEN)
-		healzone.get_damage(10*Enemy.speed)
+				self.is_loaded.reset()
+		if self.is_loaded2:
+			self.is_loaded2.reset()
+			self.get_damage(HealZone.MAX_HEALTH[self.corrupted] / HealZone.MAX_DURATION[self.corrupted])
 
+	def on_display(self, SCREEN):
+		rect = (self.x-self.radius, self.y-self.radius, *HealZone.range_im[self.corrupted].get_size())
+		Enemy.new_rects.append(rect)
+		SCREEN.blit(HealZone.range_im[self.corrupted], (rect[0], rect[1]))
 
 Enemy.setup_subclasses()
