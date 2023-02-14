@@ -161,8 +161,9 @@ class Tower:
 		Tower.dict[cls.__name__].append(self)
 
 		Tower.update_boosters()
-
-		self.is_loaded = Timer(cls.CLASSIC_RELOAD_SPEED[lvl] / self.speed_multiplier)
+		
+		if hasattr(cls, "CLASSIC_RELOAD_SPEED"):
+			self.is_loaded = Timer(cls.CLASSIC_RELOAD_SPEED[lvl] / self.speed_multiplier)
 
 	def __repr__(self):
 		return f'Tower located at x = {self.x}, y = {self.y}\n{self.pos}'
@@ -305,30 +306,27 @@ class Tower:
 	#endregion
 
 	#region SCREEN RELATIVE FUNCTIONS
-	def update(SCREEN, GAME_SCREEN, xc, yc, show_range = True, selected = None, update_game_screen = True):
+	def update(SCREEN, GAME_SCREEN, xc, yc, show_range = True, selected = None, update_game_screen = True, logic_update = True):
 		Tower.last_rects = Tower.new_rects.copy()
 		Tower.new_rects = []
 
 		EnemyEffect.update()
 		Tower.looked = None
 
-		for cls in Tower.subclasses:
-			for tower in Tower.dict[cls.__name__]:
-				if selected:
-					if selected in tower.pos:
+		if logic_update:
+			for cls in Tower.subclasses:
+				for tower in Tower.dict[cls.__name__]:
+					if selected:
+						if selected in tower.pos:
+							Tower.looked = tower, cls
+					elif (xc, yc) in tower.pos:
 						Tower.looked = tower, cls
-				elif (xc, yc) in tower.pos:
-					Tower.looked = tower, cls
-				if update_game_screen:
-					Tower.new_rects.append(tower.rect)
-					GAME_SCREEN.blit(cls.image, (tower.rect[0], tower.rect[1]))
-					rect = (tower.rect[0] + tower.rect[2]-Tower.lvl_indicator_size, tower.rect[1] + tower.rect[3]-Tower.lvl_indicator_size, *Tower.lvl_indicators[tower.lvl].get_size())
-					Tower.new_rects.append(rect)
-					GAME_SCREEN.blit(Tower.lvl_indicators[tower.lvl], (rect[0], rect[1]))
-			for tower in Tower.dict[cls.__name__]:
-				tower.on_update()
+					tower.on_update()
 		
 		if update_game_screen:
+			for cls in Tower.subclasses:
+				for tower in Tower.dict[cls.__name__]:
+					tower.display(GAME_SCREEN)
 			Tower.new_rects.append((0, 0, *GAME_SCREEN.get_size()))
 			SCREEN.blit(GAME_SCREEN, (0, 0))
 		
@@ -356,6 +354,14 @@ class Tower:
 			rect = (center[0] - range, center[1] - range, *range_im.get_size())
 			Tower.new_rects.append(rect)
 			SCREEN.blit(range_im, (rect[0], rect[1]))
+	
+	def display(self, GAME_SCREEN):
+		cls = self.__class__
+		Tower.new_rects.append(self.rect)
+		GAME_SCREEN.blit(cls.image, (self.rect[0], self.rect[1]))
+		rect = (self.rect[0] + self.rect[2]-Tower.lvl_indicator_size, self.rect[1] + self.rect[3]-Tower.lvl_indicator_size, *Tower.lvl_indicators[self.lvl].get_size())
+		Tower.new_rects.append(rect)
+		GAME_SCREEN.blit(Tower.lvl_indicators[self.lvl], (rect[0], rect[1]))
 	#endregion
 
 	#region TOWER RELATIVE FUNCTION

@@ -409,11 +409,11 @@ def nav_game_to_menu():
 def nav_menu_to_game():
 	global current_menu
 	current_menu = "game"
-	xp, yp = game.menu.SPEED_POS
-	wp, hp = game.menu.SPEED_WIDTH, game.menu.SPEED_HEIGHT
 
-	ImageButton('speed_up', "images/others/speed_up.png", (xp + 10, yp), (16*2 + 12, 15*2 + 12))
-	ImageButton('speed_down', "images/others/speed_down.png", (xp + wp - 10 - 44, yp), (16*2 + 12, 15*2 + 12))
+	ImageButton('speed_up', "images/others/speed_up.png", *Menu.RECT_SPEED_UP)
+	ImageButton('speed_down', "images/others/speed_down.png", *Menu.RECT_SPEED_DOWN)
+	ImageButton('pause', "images/others/pause.ppm", *Menu.RECT_WAVE_PAUSE)
+
 	ImageButton.unlock('speed_up')
 	ImageButton.unlock('speed_down')
 	if settings['speed'] == 1:
@@ -550,7 +550,7 @@ while execute:
 	elif current_menu == "game":
 		xc, yc = int((x-game._xoffset)/tile_size), int((y-game._yoffset)/tile_size)		
 
-		if settings['wave_enabled']:
+		if settings['wave_enabled'] and settings['playing']:
 			game.update_enemy_spawn()
 		
 		if not (drag_n_dropping or info_bubble):
@@ -716,9 +716,9 @@ while execute:
 		# ? Change GAME_SCREEN image to correspond with new array (instead of updating everything every frame)
 		show_range = (drag_n_dropping == None and game.selected_tiles == [])
 		selected = (selected_tower[0].pos[0] if selected_tower else None)
-		game.update_screen(SCREEN, GAME_SCREEN, (xc, yc), show_range, selected)
+		game.update_screen(SCREEN, GAME_SCREEN, (xc, yc), show_range, selected, settings['playing'])
 
-		Enemy.update(SCREEN, game.wave)
+		Enemy.update(SCREEN, game.wave, settings['playing'])
 		game.menu.update(SCREEN)
 
 		if selected_tower:
@@ -809,6 +809,17 @@ while execute:
 			if settings["speed"] == 1:
 				ImageButton.lock('speed_down')
 			ImageButton.unlock('speed_up')
+		
+		if ImageButton.ex_and_clicked('pause'):
+			settings['playing'] = False
+			Timer.pause()
+			ImageButton.delete('pause')
+			ImageButton('play', "images/others/play.ppm", *Menu.RECT_WAVE_PAUSE)
+		if ImageButton.ex_and_clicked('play'):
+			settings['playing'] = True
+			Timer.resume()
+			ImageButton.delete('playing')
+			ImageButton('pause', "images/others/pause.ppm", *Menu.RECT_WAVE_PAUSE)
 
 		prev_xc, prev_yc = xc, yc
 

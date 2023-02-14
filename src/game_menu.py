@@ -94,7 +94,9 @@ class Menu:
 	WAVE_VER_MARGIN = 4
 
 	WAVE_WIDTH = None
-	WAVE_HEIGHT = 50
+	WAVE_HEIGHT = 60
+
+	RECT_WAVE_PAUSE = None
 
 	# Setting up SPEED layout
 	SPEED_POS = None
@@ -104,6 +106,9 @@ class Menu:
 
 	SPEED_WIDTH = None
 	SPEED_HEIGHT = 40
+
+	RECT_SPEED_UP = None
+	RECT_SPEED_DOWN = None
 
 	# Setting up LIFE layout
 	LIFE_POS = None
@@ -212,10 +217,17 @@ class Menu:
 		# Setting up WAVE constants
 		Menu.WAVE_POS = (x + Menu.WAVE_HOR_MARGIN, y + Menu.LEVEL_HEIGHT + 2 * Menu.LEVEL_VER_MARGIN + Menu.COIN_HEIGHT + 2 * Menu.COIN_VER_MARGIN + Menu.WAVE_VER_MARGIN)
 		Menu.WAVE_WIDTH = width - Menu.LIFE_WIDTH - 2 * Menu.LIFE_HOR_MARGIN - 2 * Menu.WAVE_HOR_MARGIN
-
+		tmp = 16*2 + 12
+		Menu.RECT_WAVE_PAUSE = (Menu.WAVE_POS[0] + 10, Menu.WAVE_POS[1] + (Menu.WAVE_HEIGHT - tmp) / 2 - 2), (tmp, tmp)
+		
 		# Setting up SPEED constants
 		Menu.SPEED_POS = (x + Menu.SPEED_HOR_MARGIN, y + Menu.LEVEL_HEIGHT + 2 * Menu.LEVEL_VER_MARGIN + Menu.COIN_HEIGHT + 2 * Menu.COIN_VER_MARGIN + Menu.WAVE_HEIGHT + 2 * Menu.WAVE_VER_MARGIN + Menu.SPEED_VER_MARGIN)
 		Menu.SPEED_WIDTH = width - Menu.LIFE_WIDTH - 2 * Menu.LIFE_HOR_MARGIN - 2 * Menu.SPEED_HOR_MARGIN
+
+		xp, yp = Menu.SPEED_POS
+		wp = Menu.SPEED_WIDTH
+		Menu.RECT_SPEED_UP = (xp + 10, yp), (16*2 + 12, 15*2 + 12)
+		Menu.RECT_SPEED_DOWN = (xp + wp - 10 - 44, yp), (16*2 + 12, 15*2 + 12)
 
 		# Setting up LIFE constants
 		Menu.LIFE_POS = (x + width - Menu.LIFE_HOR_MARGIN - Menu.LIFE_WIDTH, y + Menu.LIFE_VER_MARGIN)

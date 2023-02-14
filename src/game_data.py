@@ -466,12 +466,12 @@ class Game:
 		for (xc, yc) in self.selected_tiles:
 			surface.blit(image, (xoffset + xc*tile_size, yoffset + yc*tile_size))
 
-	def update_screen(self, screen, surface, pos, show_range, selected):
+	def update_screen(self, screen, surface, pos, show_range, selected, logic_update):
 		if self.need_tile_update:
 			self.display_tiles(surface)
 		else:
 			screen.blit(surface, (0, 0))
-		Tower.update(screen, surface, *pos, show_range, selected, self.need_tile_update)
+		Tower.update(screen, surface, *pos, show_range, selected, self.need_tile_update, logic_update)
 		self.need_tile_update = False
 	
 	def update_left(self):

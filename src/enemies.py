@@ -204,7 +204,7 @@ class Enemy:
 		for cls in Enemy.subclasses:
 			printf(f'{cls.__name__} :\t{cls.MAX_HEALTH}')
 
-	def update(SCREEN, wave):
+	def update(SCREEN, wave, logic_update):
 		Enemy.time_since_last_update = time.time() - Enemy.last_update
 		Enemy.last_rects = Enemy.new_rects.copy()
 		Enemy.new_rects = []
@@ -216,13 +216,13 @@ class Enemy:
 				if hasattr(enemy, "on_display"):
 					enemy.on_display(SCREEN)
 				
-				if hasattr(enemy, "on_update"):
-					enemy.on_update()
-				
-				if cls.follow_path:
-					Enemy.update_path_follower(SCREEN, enemy, wave)
-				else:
-					enemy.custom_update()
+				if logic_update:
+					if hasattr(enemy, "on_update"):
+						enemy.on_update()
+					if cls.follow_path:
+						Enemy.update_path_follower(SCREEN, enemy, wave)
+					else:
+						enemy.custom_update()
 		Enemy.last_update = time.time()
 
 	def change_path(wave, paths, lengths):
