@@ -172,6 +172,12 @@ time_stamp = time.time()
 
 def new_game(width, height, start_count):
 	global game, selected_tower
+
+	if ImageButton.exists('play'):
+		settings['playing'] = True
+		Timer.resume()
+		ImageButton.delete('playing')
+		ImageButton('pause', "images/others/pause.ppm", *Menu.RECT_WAVE_PAUSE)
 	
 	game = Game((width, height), start_count)
 	if game.tile_size != tile_size:
@@ -400,6 +406,7 @@ def show_selected_tower(xi, yi, pressed, clicked_up):
 def nav_game_to_menu():
 	global current_menu
 	current_menu = "menu"
+	settings['playing'] = True
 	ImageButton.delete_all()
 	Button.delete_all()
 	Button("new_map", (WIDTH/2 - 150, HEIGHT/2), (300, 50), "Nouvelle partie", font_type=2)
