@@ -14,6 +14,7 @@ from buttons import Button, ImageButton
 from enemies import Dragon, Enemy, Goblin, Healer, HealZone, KingOfKnights, Knight, Giant
 from game_data import Game
 from towers import Tower
+from timer import Timer
 from waves import Wave
 from logs import Logs
 from game_menu import Menu
@@ -21,7 +22,7 @@ from game_menu import Menu
 def printf(args):
 	Logs.print('game', args)
 
-VARIABLE = time.time()
+START = time.time()
 
 # region SCREEN & FONTS SETUP
 pygame.init()
@@ -101,7 +102,7 @@ def is_on_rect(pos, rect):
 	return b1 and b2
 
 #region game VARIABLES
-settings = {'tilesize': 14, 'settings': 0, 'dev': False,
+settings = {'tilesize': 14, 'settings': 0, 'dev': False, 'playing': True,
 			'fpsmax': 0, 'wave_enabled': True, 'speed': 1, 'color_theme': 0}
 colors = {'background': (10, 14, 18),
 		  'settings': (100, 100, 100),
@@ -239,11 +240,12 @@ def show_debug_menu():
 		texts.append("time played"); values.append(int(time.time()-time_stamp))
 		texts.append("speed"); values.append(settings["speed"])
 		if settings['dev']:
-			texts.append("dimension (dev.)"); values.append(game.size)
-			texts.append("paths lengths (dev.)"); values.append(game.lengths)
-			texts.append("wave number (dev.)"); values.append(game.wave_count)
-			texts.append("wave enabled (dev.)"); values.append(settings['wave_enabled'])
-			texts.append("enemies left (dev.)"); values.append(game.wave.length)
+			texts.append("(dev.) dimension"); values.append(game.size)
+			texts.append("(dev.) paths lengths"); values.append(game.lengths)
+			texts.append("(dev.) wave number"); values.append(game.wave_count)
+			texts.append("(dev.) wave enabled"); values.append(settings['wave_enabled'])
+			texts.append("(dev.) enemies left"); values.append(game.wave.length)
+			texts.append("(dev.) active timers"); values.append(len(Timer.list))
 		texts.append("towers count"); values.append(Tower.amount)
 		texts.append("enemies count"); values.append(Enemy.amount)
 		texts.append("-> corrupted"); values.append(Enemy.corrupted)
@@ -259,24 +261,24 @@ def show_debug_menu():
 		texts.append("settings view"); keys.append("LSHIFT / LCTRL")
 		texts.append("toggle color theme"); keys.append("t")
 		if settings['dev']:
-			texts.append("toggle mode (dev.)"); keys.append("d")
-			texts.append("update graphics (dev.)"); keys.append("j")
-			texts.append("save map (dev.)"); keys.append("m")
-			texts.append("generate different map (dev.)"); keys.append("n")
+			texts.append("(dev.) toggle mode"); keys.append("d")
+			texts.append("(dev.) update graphics"); keys.append("j")
+			texts.append("(dev.) save map"); keys.append("m")
+			texts.append("(dev.) generate different map"); keys.append("n")
 		texts.append("generate new map"); keys.append("SPACE")
 		if settings['dev']:
-			texts.append("fill tiles (dev.)"); keys.append("e")
-			texts.append("toggle wave mode (dev.)"); keys.append("w")
-			texts.append("next wave (dev.)"); keys.append("x")
-			texts.append("add knight (dev.)"); keys.append("k")
-			texts.append("add goblin (dev.)"); keys.append("g")
-			texts.append("add dragon (dev.)"); keys.append("v")
-			texts.append("add king of knights (dev.)"); keys.append("o")
-			texts.append("add giant (dev.)"); keys.append("y")
-			texts.append("add healer (dev.)"); keys.append("h")
-			texts.append("save tower info (dev.)"); keys.append("i")
-			texts.append("give coins (dev.)"); keys.append("c")
-			texts.append("give extra life (dev.)"); keys.append("l")
+			texts.append("(dev.) fill tiles"); keys.append("e")
+			texts.append("(dev.) toggle wave mode"); keys.append("w")
+			texts.append("(dev.) next wave"); keys.append("x")
+			texts.append("(dev.) add knight"); keys.append("k")
+			texts.append("(dev.) add goblin"); keys.append("g")
+			texts.append("(dev.) add dragon"); keys.append("v")
+			texts.append("(dev.) add king of knights"); keys.append("o")
+			texts.append("(dev.) add giant"); keys.append("y")
+			texts.append("(dev.) add healer"); keys.append("h")
+			texts.append("(dev.) save tower info"); keys.append("i")
+			texts.append("(dev.) give coins"); keys.append("c")
+			texts.append("(dev.) give extra life"); keys.append("l")
 		display_keys(texts, keys)
 	
 	if settings['dev']:
@@ -490,18 +492,12 @@ def remove_info_bubble():
 
 	ImageButton.delete('confirm', 'cancel')
 
-def has_elapsed(last, duration):
-	t = time.time()
-	return (t - last) >= duration / settings['speed']
-
 info_bubble = None
 info_rect = None
 
-last_spawn = 0
-
 last_rects, new_rects = [], []
 
-printf('Initialization time : ' + str(time.time()-VARIABLE))
+printf('Initialization time : ' + str(time.time()-START))
 
 prev_xc, prev_yc = 0, 0
 
@@ -536,7 +532,6 @@ while execute:
 			pygame.display.update()
 			new_game(n, m, rdi(1,3))
 			nav_menu_to_game()
-			last_spawn = time.time()
 		elif Button.clicked('browse_maps'):
 			pass
 		elif Button.clicked('settings'):
@@ -553,36 +548,13 @@ while execute:
 		Button.update(SCREEN, x, y, current_click_state, clicked_up)
 		
 	elif current_menu == "game":
-		xc, yc = int((x-game._xoffset)/tile_size), int((y-game._yoffset)/tile_size)
-		
-		if Enemy.amount == 0 and game.wave.length == 0:
-			# ? Timer before launching an other wave
-			last_spawn = time.time()
-			game.new_wave()
+		xc, yc = int((x-game._xoffset)/tile_size), int((y-game._yoffset)/tile_size)		
 
-		if has_elapsed(last_spawn, Wave.PAUSE) and game.wave.length > 0 and settings['wave_enabled']:
-			last_spawn = time.time()
-			cls, corrupted = game.wave.wave[0]
-			cls(corrupted)
-			game.wave.wave.pop(0)
-			game.wave.length -= 1
+		if settings['wave_enabled']:
+			game.update_enemy_spawn()
 		
-		if pressed_mouse_keys[0] and 0 <= xc < n and 0 <= yc < m and not drag_n_dropping and not info_bubble:
-			allowed = False
-			if game.selection_type == 'tree':
-				allowed = (game.trees[xc, yc] > 0)
-			elif game.selection_type == 'tile':
-				allowed = (game.array[xc, yc] == 0 and (game.has_selected_neighbor_tile(xc, yc) or game.has_neighbor_tile(xc, yc)))
-			else:
-				if game.trees[xc, yc] > 0:
-					game.selection_type = 'tree'
-					allowed = True
-				elif game.array[xc][yc] == 0 and game.has_neighbor_tile(xc, yc):
-					game.selection_type = 'tile'
-					allowed = True
-			if not (xc, yc) in game.selected_tiles and allowed:
-				game.selected_tiles.append((xc, yc))
-				game.update_left()
+		if not (drag_n_dropping or info_bubble):
+			game.update_selection(xc, yc, pressed=pressed_mouse_keys[0])
 
 		for event in listev:
 			if event.type == QUIT:
@@ -594,16 +566,7 @@ while execute:
 						if info_bubble and not is_on_rect((x, y), info_rect):
 							remove_info_bubble()
 						elif not info_bubble:
-							if 0 <= xc < n and 0 <= yc < m:
-								if game.trees[xc, yc] != 0:
-									game.selected_tiles = [(xc, yc)]
-									game.selection_type = 'tree'
-								elif game.array[xc, yc] == 0 and game.has_neighbor_tile(xc, yc):
-									game.selected_tiles = [(xc, yc)]
-									game.selection_type = 'tile'
-							else:
-								game.selected_tiles = []
-								game.selection_type = None
+							game.init_selection(xc, yc)
 						selected_tower = Tower.get(xc, yc)
 						if selected_tower:
 							printf("Selected tower")

@@ -7,7 +7,7 @@ from perlin_noise import perlin_noise
 from logs import Logs
 
 def printf(args):
-	Logs.print('setup_game_tools',args)
+	Logs.print('game_tools',args)
 
 def adj(size,i,j):
 	n,m = size

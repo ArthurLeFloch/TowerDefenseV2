@@ -1,12 +1,12 @@
 import pygame
 import os
-import time
 
 from tower_description import InstanceDescription as desc
 from tower_description import ShopDescription as shop_desc
 from enemies import Enemy, Knight, Goblin, Dragon, KingOfKnights, Giant, Healer, HealZone
 from enemy_effects import EnemyEffect, Fire, Poison, Slowness
 from logs import Logs
+from timer import Timer
 
 def printf(args):
 	Logs.print('towers', args)
@@ -154,7 +154,6 @@ class Tower:
 		self.lvl = lvl
 
 		self.chosen_boost = 0
-		self.last_hit = time.time()
 		self.shot = 0
 		Tower.amount += 1
 
@@ -162,6 +161,8 @@ class Tower:
 		Tower.dict[cls.__name__].append(self)
 
 		Tower.update_boosters()
+
+		self.is_loaded = Timer(cls.CLASSIC_RELOAD_SPEED[lvl] / self.speed_multiplier)
 
 	def __repr__(self):
 		return f'Tower located at x = {self.x}, y = {self.y}\n{self.pos}'
@@ -389,7 +390,6 @@ class Tower:
 		Tower.amount -= 1
 	
 	def level_up(self):
-		self.last_hit = time.time()
 		self.lvl += 1
 		if hasattr(self, "on_level_up"):
 			self.on_level_up()
@@ -407,10 +407,6 @@ class Tower:
 	def damage(tower):
 		cls = tower.__class__
 		return cls.CLASSIC_DAMAGE[tower.lvl]*tower.damage_multiplier
-	
-	def is_loaded(self):
-		reload_time = self.__class__.CLASSIC_RELOAD_SPEED[self.lvl] / (Tower.speed * self.speed_multiplier)
-		return (time.time() - self.last_hit) >= reload_time
 	
 	@property
 	def is_choosing_boost(self):
@@ -478,8 +474,12 @@ class Booster(Tower):
 		Tower.update_boosters()
 
 class Classic(Tower):
-	pass
-
+	def on_delete(self):
+		self.is_loaded.delete()
+	
+	def on_level_up(self):
+		cls = self.__class__
+		self.is_loaded.change_duration(cls.CLASSIC_RELOAD_SPEED[self.lvl] / self.speed_multiplier)
 
 class Hut(Classic):
 	name = "Hute"
@@ -511,7 +511,7 @@ class Hut(Classic):
 		Tower.__init__(self, (x, y), lvl=level)
 
 	def on_update(sniper):
-		if sniper.is_loaded():
+		if sniper.is_loaded:
 			closer = Enemy.get_closer(Hut.CAN_ATTACK, sniper.center, sniper.range)
 			if closer != None:
 				closer.get_damage(sniper.damage)
@@ -520,7 +520,7 @@ class Hut(Classic):
 					closer.apply_effect(Poison, effect)
 				elif sniper.chosen_boost == 2:
 					Enemy.last_earned += Hut.GOLD_TOUCH_AMOUNT[sniper.lvl]
-				sniper.last_hit = time.time()
+				sniper.is_loaded.reset()
 				sniper.shot += 1
 	
 	@classmethod
@@ -570,12 +570,12 @@ class Mortar(Classic):
 		Tower.__init__(self, (x, y), lvl=level)
 
 	def on_update(mortar):
-		if mortar.is_loaded():
+		if mortar.is_loaded:
 			closer = Enemy.get_closer(Mortar.CAN_ATTACK, mortar.center, mortar.range)
 			if closer:
-				mortar.shot += 1
-				mortar.last_hit = time.time()
 				Enemy.zone_damage(Mortar.CAN_ATTACK, (closer.x, closer.y), mortar.explosion_radius, mortar.damage)
+				mortar.is_loaded.reset()
+				mortar.shot += 1
 	
 	@classmethod
 	def shop_item(cls, shop_width, item_height):
@@ -618,11 +618,11 @@ class Wizard(Classic):
 		Tower.__init__(self, (x, y), lvl=level)
 
 	def on_update(wizard):
-		if wizard.is_loaded():
+		if wizard.is_loaded:
 			at_least_one = Enemy.zone_damage(Wizard.CAN_ATTACK, wizard.center, wizard.range, wizard.damage)
 			if at_least_one:
-				wizard.shot+=1
-				wizard.last_hit = time.time()
+				wizard.shot += 1
+				wizard.is_loaded.reset()
 	
 	@classmethod
 	def shop_item(cls, shop_width, item_height):
@@ -666,14 +666,14 @@ class FireDiffuser(Classic):
 		Tower.__init__(self, (x, y), lvl=level)
 
 	def on_update(fire_diffuser):
-		if fire_diffuser.is_loaded():
+		if fire_diffuser.is_loaded:
 			damaged = Enemy.get_all(FireDiffuser.CAN_ATTACK, fire_diffuser.center, fire_diffuser.range)
-			if damaged != []:
-				fire_diffuser.shot += 1
-				fire_diffuser.last_hit = time.time()
 			for enemy in damaged:
 				effect = Fire(enemy, FireDiffuser.EFFECT_LEVEL[fire_diffuser.lvl], FireDiffuser.CLASSIC_DURATION[fire_diffuser.lvl])
 				enemy.apply_effect(Fire, effect)
+			if damaged != []:
+				fire_diffuser.shot += 1
+				fire_diffuser.is_loaded.reset()
 	
 	@classmethod
 	def shop_item(cls, shop_width, item_height):
@@ -717,14 +717,14 @@ class PoisonDiffuser(Classic):
 		Tower.__init__(self, (x, y), lvl=level)
 
 	def on_update(poison_diffuser):
-		if poison_diffuser.is_loaded():
+		if poison_diffuser.is_loaded:
 			damaged = Enemy.get_all(PoisonDiffuser.CAN_ATTACK, poison_diffuser.center, poison_diffuser.range)
-			if damaged != []:
-				poison_diffuser.shot += 1
-				poison_diffuser.last_hit = time.time()
 			for enemy in damaged:
 				effect = Poison(enemy, PoisonDiffuser.EFFECT_LEVEL[poison_diffuser.lvl], PoisonDiffuser.CLASSIC_DURATION[poison_diffuser.lvl])
 				enemy.apply_effect(Poison, effect)
+			if damaged != []:
+				poison_diffuser.shot += 1
+				poison_diffuser.is_loaded.reset()
 	
 	@classmethod
 	def shop_item(cls, shop_width, item_height):
@@ -769,15 +769,15 @@ class SlownessDiffuser(Classic):
 		Tower.__init__(self, (x, y), lvl=level)
 
 	def on_update(slowness_diffuser):
-		if slowness_diffuser.is_loaded():
+		if slowness_diffuser.is_loaded:
 			damaged = Enemy.get_all(SlownessDiffuser.CAN_ATTACK, slowness_diffuser.center, slowness_diffuser.range)
-			if damaged != []:
-				slowness_diffuser.shot+=1
-				slowness_diffuser.last_hit = time.time()
 			for enemy in damaged:
 				if hasattr(enemy, "v"):
 					effect = Slowness(enemy, SlownessDiffuser.EFFECT_LEVEL[slowness_diffuser.lvl], SlownessDiffuser.CLASSIC_DURATION[slowness_diffuser.lvl])
 					enemy.apply_effect(Slowness, effect)
+			if damaged != []:
+				slowness_diffuser.shot += 1
+				slowness_diffuser.is_loaded.reset()
 	
 	@classmethod
 	def shop_item(cls, shop_width, item_height):
@@ -818,9 +818,9 @@ class Bank(Classic):
 		Tower.__init__(self, (x, y), lvl=level)
 
 	def on_update(bank):
-		if bank.is_loaded():
+		if bank.is_loaded:
 			Enemy.last_earned += bank.EARNS[bank.lvl]
-			bank.last_hit = time.time()
+			bank.is_loaded.reset()
 	
 	@classmethod
 	def shop_item(cls, shop_width, item_height):

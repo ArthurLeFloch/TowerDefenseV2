@@ -2,6 +2,7 @@ from random import randint as rdi
 
 from enemies import Enemy, Knight, Goblin, Dragon, KingOfKnights, Giant, Healer, HealZone
 from logs import Logs
+from timer import Timer
 
 def printf(args):
 	Logs.print('waves',args)
@@ -18,6 +19,7 @@ class Wave:
 		self.wave = []
 		Wave.generate(self.wave, self.lvl, difficulty)
 		self.length = len(self.wave)
+		self.is_loaded = Timer(Wave.PAUSE)
 
 	def generate(wave, lvl, difficulty):
 		Enemy.update_health(lvl, difficulty)

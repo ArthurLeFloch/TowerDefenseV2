@@ -6,11 +6,12 @@ from datetime import datetime
 
 from towers import Tower
 from enemies import Enemy
-from setup_game_tools import generate, findpath
+from game_tools import generate, findpath
 from chunks import Chunk
 from waves import Wave
 from logs import Logs
 from levels import Level
+from timer import Timer
 
 today = datetime.now()
 
@@ -156,6 +157,8 @@ class Game:
 
 	def new_wave(self):
 		self.wave_count += 1
+		if hasattr(self, "wave"):
+			self.wave.is_loaded.delete()
 		self.wave = Wave()
 		self.menu.update_val_wave(self.wave_count)
 	
@@ -163,11 +166,52 @@ class Game:
 		self.speed = value
 		self.menu.update_val_speed(self.speed)
 		Tower.speed = value
+		Timer.speed = value
 		Enemy.change_speed(value)
 	
 	def get_damage(self, value):
 		self.life = max(0, self.life-value)
 		self.menu.update_val_life(self.life)
+	
+	def update_enemy_spawn(self):
+		if Enemy.amount == 0 and self.wave.length == 0:
+			self.new_wave()
+		elif self.wave.is_loaded and self.wave.length > 0:
+			self.wave.is_loaded.reset()
+			cls, corrupted = self.wave.wave[0]
+			cls(corrupted)
+			self.wave.wave.pop(0)
+			self.wave.length -= 1
+	
+	def init_selection(self, xc, yc):
+		if 0 <= xc < self.n and 0 <= yc < self.m:
+			if self.trees[xc, yc] != 0:
+				self.selected_tiles = [(xc, yc)]
+				self.selection_type = 'tree'
+			elif self.array[xc, yc] == 0 and self.has_neighbor_tile(xc, yc):
+				self.selected_tiles = [(xc, yc)]
+				self.selection_type = 'tile'
+		else:
+			self.selected_tiles = []
+			self.selection_type = None
+	
+	def update_selection(self, xc, yc, pressed):
+		allowed = False
+		if pressed and 0 <= xc < self.n and 0 <= yc < self.m:
+			if self.selection_type == 'tree':
+				allowed = (self.trees[xc, yc] > 0)
+			elif self.selection_type == 'tile':
+				allowed = (self.array[xc, yc] == 0 and (self.has_selected_neighbor_tile(xc, yc) or self.has_neighbor_tile(xc, yc)))
+			else:
+				if self.trees[xc, yc] > 0:
+					self.selection_type = 'tree'
+					allowed = True
+				elif self.array[xc][yc] == 0 and self.has_neighbor_tile(xc, yc):
+					self.selection_type = 'tile'
+					allowed = True
+			if not (xc, yc) in self.selected_tiles and allowed:
+				self.selected_tiles.append((xc, yc))
+				self.update_left()
 	
 	#region PATH LOGIC
 	def set_tile(self, val, xc, yc, width=1, height=None):
@@ -432,3 +476,9 @@ class Game:
 	
 	def update_left(self):
 		self.need_tile_update = True
+	
+	def pause():
+		Timer.pause()
+	
+	def resume():
+		Timer.resume()

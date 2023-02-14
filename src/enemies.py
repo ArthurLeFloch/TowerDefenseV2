@@ -6,6 +6,7 @@ from random import randint as rdi
 from enemy_effects import EnemyEffect
 from chunks import Chunk
 from logs import Logs
+from timer import Timer
 
 def printf(args):
 	Logs.print('enemies', args)
@@ -48,6 +49,8 @@ class Enemy:
 
 	time_since_last_update = 0.0
 	last_update = 0.0
+
+	last_pause = None
 
 	new_rects = []
 	last_rects = []
@@ -291,9 +294,6 @@ class Enemy:
 			result *= self.effects['Slowness'].slowing_rate
 		return result
 	
-	def has_elapsed(self, last, duration):
-		return (time.time() - last) >= duration / Enemy.speed
-	
 	def update_path_follower(SCREEN, cls, self, wave):
 		tile_size = Enemy.tile_size
 		if not self.has_reached_end:
@@ -356,6 +356,9 @@ class Enemy:
 		for effect in self.effects.values():
 			if effect != None:
 				effect.delete()
+		if hasattr(self, "is_loaded"):
+			self.is_loaded.delete()
+
 		Enemy.dict[cls.__name__].remove(self)
 		cls.amount -= 1
 		Enemy.amount -= 1
@@ -513,12 +516,12 @@ class KingOfKnights(Enemy):
 
 	def __init__(self, corrupted=0):
 		Enemy.__init__(self, corrupted=corrupted)
-		self.last_spawned = time.time()
+		self.is_loaded = Timer(KingOfKnights.SPAWNING_SPEED[self.corrupted])
 	
 	def on_update(self):
-		if self.has_elapsed(self.last_spawned, KingOfKnights.SPAWNING_SPEED[self.corrupted]):
+		if self.is_loaded:
 			Knight(self.corrupted, pos=(self.x, self.y), start=self.start_index, current_on_path=self.current_on_path)
-			self.last_spawned = time.time()
+			self.is_loaded.reset()
 
 class Giant(Enemy):
 	follow_path = True
@@ -559,7 +562,7 @@ class Healer(Enemy):
 	def __init__(self, corrupted=0):
 		Enemy.__init__(self, corrupted=corrupted)
 		self.vx, self.vy = _vect((self.x, self.y), Enemy.end)
-		self.last_heal = time.time()
+		self.is_loaded = Timer(Healer.HEALING_SPEED[corrupted])
 		self.focus = None
 
 	def _update(SCREEN, healer, *args):		
@@ -567,10 +570,9 @@ class Healer(Enemy):
 			if healer.focus.dead or _dist_2(healer.x,healer.y,healer.focus.x,healer.focus.y) > (10*Enemy.tile_size)**2:
 				healer.focus = Enemy.get_closer(Healer.CAN_HEAL,(healer.x,healer.y),10*Enemy.tile_size)
 			if healer.focus and _dist_2(healer.x,healer.y,healer.focus.x,healer.focus.y) < (4*Enemy.tile_size)**2:
-				if not healer.focus.dead:
-					if healer.has_elapsed(healer.last_heal, Healer.HEALING_SPEED[healer.corrupted]):
-						healer.focus.get_damage(-Healer.HEALING_AMOUNT[healer.corrupted])
-						healer.last_heal = time.time()
+				if not healer.focus.dead and healer.is_loaded:
+					healer.focus.get_damage(-Healer.HEALING_AMOUNT[healer.corrupted])
+					healer.is_loaded.reset()
 		else:
 			healer.focus = Enemy.get_closer(Healer.CAN_HEAL,(healer.x,healer.y),10*Enemy.tile_size)
 		
@@ -620,14 +622,14 @@ class HealZone(Enemy):
 
 	def __init__(self, corrupted=0, pos = None):
 		Enemy.__init__(self, pos=pos, corrupted=corrupted)
-		self.last_heal = time.time()
+		self.is_loaded = Timer(HealZone.HEALING_SPEED[corrupted])
 		self.radius = HealZone.DEFAULT_RADIUS[corrupted] * Enemy.tile_size
 
 	def _update(SCREEN, healzone, *args):
-		if healzone.has_elapsed(healzone.last_heal, HealZone.HEALING_SPEED[healzone.corrupted]):
+		if healzone.is_loaded:
 			at_least_one = Enemy.zone_damage(HealZone.CAN_HEAL, (healzone.x,healzone.y), healzone.radius, -HealZone.HEALING_AMOUNT[healzone.corrupted])
 			if at_least_one:
-				healzone.last_heal = time.time()
+				healzone.is_loaded.reset()
 		
 		rect = (healzone.x-healzone.radius, healzone.y-healzone.radius, HealZone.range_im[healzone.corrupted].get_size())
 		Enemy.new_rects.append(rect)

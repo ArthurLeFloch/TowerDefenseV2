@@ -1,12 +1,12 @@
 class Logs:
-	GREY	= '\33[90m'
-	RED	 = '\33[91m'
-	GREEN   = '\33[92m'
-	YELLOW  = '\33[93m'
-	BLUE	= '\33[94m'
-	VIOLET  = '\33[95m'
-	BEIGE   = '\33[96m'
-	WHITE   = '\33[97m'
+	GREY	= '\33[1;90m'
+	RED	 = '\33[1;91m'
+	GREEN   = '\33[1;92m'
+	YELLOW  = '\33[1;93m'
+	BLUE	= '\33[1;94m'
+	VIOLET  = '\33[1;95m'
+	BEIGE   = '\33[1;96m'
+	WHITE   = '\33[1;97m'
 
 	END	 = '\33[0m'
 
@@ -22,7 +22,7 @@ class Logs:
 				return Logs.BLUE
 			case "waves":
 				return Logs.BEIGE
-			case "setup_game_tools":
+			case "game_tools":
 				return Logs.GREY
 			case "game_menu":
 				return Logs.GREEN
@@ -31,7 +31,8 @@ class Logs:
 	
 	def print(name, *args):
 		color = Logs.get_color(name)
-		print(f"{color}[{name}.py]{Logs.END} \t", end="")
+		print(f"{color}[{name}.py]{Logs.END}", end="")
+		print("\r\t\t-> ", end="")
 		for arg in args:
 			print(arg, end="")
 		print()
