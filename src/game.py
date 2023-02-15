@@ -172,12 +172,6 @@ time_stamp = time.time()
 
 def new_game(width, height, start_count):
 	global game, selected_tower
-
-	if ImageButton.exists('play'):
-		settings['playing'] = True
-		Timer.resume()
-		ImageButton.delete('playing')
-		ImageButton('pause', "images/others/pause.ppm", *Menu.RECT_WAVE_PAUSE)
 	
 	game = Game((width, height), start_count)
 	if game.tile_size != tile_size:
@@ -419,7 +413,7 @@ def nav_menu_to_game():
 
 	ImageButton('speed_up', "images/others/speed_up.png", *Menu.RECT_SPEED_UP)
 	ImageButton('speed_down', "images/others/speed_down.png", *Menu.RECT_SPEED_DOWN)
-	ImageButton('pause', "images/others/pause.ppm", *Menu.RECT_WAVE_PAUSE)
+	ImageButton('play_pause', "images/others/pause.ppm", *Menu.RECT_WAVE_PAUSE)
 
 	ImageButton.unlock('speed_up')
 	ImageButton.unlock('speed_down')
@@ -817,16 +811,14 @@ while execute:
 				ImageButton.lock('speed_down')
 			ImageButton.unlock('speed_up')
 		
-		if ImageButton.ex_and_clicked('pause'):
-			settings['playing'] = False
-			Timer.pause()
-			ImageButton.delete('pause')
-			ImageButton('play', "images/others/play.ppm", *Menu.RECT_WAVE_PAUSE)
-		if ImageButton.ex_and_clicked('play'):
-			settings['playing'] = True
-			Timer.resume()
-			ImageButton.delete('playing')
-			ImageButton('pause', "images/others/pause.ppm", *Menu.RECT_WAVE_PAUSE)
+		if ImageButton.ex_and_clicked('play_pause'):
+			settings['playing'] = not settings['playing']
+			if settings['playing']:
+				Timer.resume()
+				ImageButton.set_button_image('play_pause', "images/others/pause.ppm")
+			else:
+				Timer.pause()
+				ImageButton.set_button_image('play_pause', "images/others/play.ppm")
 
 		prev_xc, prev_yc = xc, yc
 

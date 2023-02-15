@@ -176,20 +176,26 @@ class ImageButton:
 		self.size = size
 		self.im_size = (size[0]-2*thickness - 2*intern_thickness - 2*extern_thickness, size[1]-2*thickness - 2*intern_thickness -2*extern_thickness)
 		self.mask_size = (size[0]-2*thickness-2*extern_thickness, size[1]-2*thickness-2*extern_thickness)
-		self.image = get_image(self.im_size, image_path)
 		self.intern_thickness = intern_thickness
 		self.extern_thickness = extern_thickness
 		self.thickness = thickness
 		self.rect = pygame.Rect((pos[0],pos[1]),(size[0],size[1]))
 		self.down = False
-		self.im_dict = self.setup()
+		self.set_image(image_path)
 		self.clickedUp = False
 		self.hoverable = hoverable
 		self.locked = locked
 		self.hovered = False
 		ImageButton.dict[name] = self
+	
+	def set_image(self, image_path):
+		self.image = get_image(self.im_size, image_path)
+		self.save_images()
 
-	def setup(self):
+	def set_button_image(name, image_path):
+		ImageButton.dict[name].set_image(image_path)
+
+	def save_images(self):
 		locked = pygame.Surface(self.size, pygame.SRCALPHA)
 		pygame.draw.rect(locked, (60, 60, 60), (0, 0, self.size[0], self.size[1]),border_radius=10)
 		pygame.draw.rect(locked, (10, 14, 17), (self.thickness, self.thickness, self.size[0] - 2*self.thickness, self.size[1] -2*self.thickness),border_radius=8)
@@ -223,7 +229,7 @@ class ImageButton:
 		down = down.convert_alpha()
 		hovered = hovered.convert_alpha()
 		classic = classic.convert_alpha()
-		return {'locked':locked, 'down':down, 'hovered':hovered, 'classic':classic}
+		self.im_dict = {'locked':locked, 'down':down, 'hovered':hovered, 'classic':classic}
 
 	def delete(*names):
 		current_keys = ImageButton.dict.keys()
