@@ -3,6 +3,7 @@ import os
 
 from tower_description import InstanceDescription as desc
 from tower_description import ShopDescription as shop_desc
+from tower_description import TowerDescription
 from enemies import Enemy, Knight, Goblin, Dragon, KingOfKnights, Giant, Healer, HealZone
 from enemy_effects import EnemyEffect, Fire, Poison, Slowness
 from logs import Logs
@@ -103,6 +104,10 @@ class Tower:
 
 	new_rects = []
 	last_rects = []
+
+	COST_TEXT = None
+
+	LEVEL_TEXT = None
 	
 	FONT = None
 	PRICE_FONT = None
@@ -174,6 +179,26 @@ class Tower:
 	
 	def setup_boosters(*args):
 		Tower.boosters = Booster.__subclasses__()
+	
+	def setup_language(tr):
+		Tower.COST_TEXT = tr.money_format
+		Tower.LEVEL_TEXT = tr.shop_required_level
+
+		Hut.name = tr.tower_hut
+		Hut.desc_boost1 = tr.tower_hut_boost1
+		Hut.desc_boost2 = tr.tower_hut_boost2
+
+		Mortar.name = tr.tower_mortar
+		Wizard.name = tr.tower_wizard
+		FireDiffuser.name = tr.tower_fire_diffuser
+		PoisonDiffuser.name = tr.tower_poison_diffuser
+		SlownessDiffuser.name = tr.tower_slowness_diffuser
+		Bank.name = tr.tower_bank
+		DamageBooster.name = tr.tower_damage_booster
+		RangeBooster.name = tr.tower_range_booster
+		SpeedBooster.name = tr.tower_speed_booster
+
+		TowerDescription.setup_language(tr)
 	
 	def setup(game):
 		tile_size = game.tile_size
@@ -279,7 +304,7 @@ class Tower:
 
 		# CAN BUY
 		item1 = item.copy()
-		tmptext = Tower.PRICE_FONT.render(f'{cls.COST[0]} $', (90, 255, 90))
+		tmptext = Tower.PRICE_FONT.render(Tower.COST_TEXT.format(money=cls.COST[0]), (90, 255, 90))
 
 		text_pos = (48 - tmptext[0].get_width()/2, item_height-24)
 		image_pos = (text_pos[0] + tmptext[0].get_width() / 2 - cls.shop_image.get_width() / 2, text_pos[1] / 2 - cls.shop_image.get_height()/2)
@@ -289,13 +314,13 @@ class Tower:
 
 		# CANNOT BUY
 		item2 = item.copy()
-		tmptext = Tower.PRICE_FONT.render(f'{cls.COST[0]} $', (240, 20, 20))
+		tmptext = Tower.PRICE_FONT.render(Tower.COST_TEXT.format(money=cls.COST[0]), (240, 20, 20))
 		item2.blit(tmptext[0], text_pos)
 		item2.blit(black_and_white(cls.shop_image), image_pos)
 
 		# LOW LEVEL
 		item3 = item.copy()
-		tmptext = Tower.PRICE_FONT.render(f'LVL {cls.ALLOWED_LEVEL[0]}', (114, 22, 224))
+		tmptext = Tower.PRICE_FONT.render(Tower.LEVEL_TEXT.format(level=cls.ALLOWED_LEVEL[0]), (114, 22, 224))
 
 		text_pos = (48 - tmptext[0].get_width()/2, item_height-24)
 
@@ -365,6 +390,10 @@ class Tower:
 	#endregion
 
 	#region TOWER RELATIVE FUNCTION
+	@property
+	def deletion_refund(self):
+		return round(self.__class__.COST[self.lvl] / 5)
+	
 	def clear():
 		for cls in Tower.subclasses:
 			Tower.dict[cls.__name__] = []
@@ -488,18 +517,18 @@ class Classic(Tower):
 		self.is_loaded.change_duration(cls.CLASSIC_RELOAD_SPEED[self.lvl] / self.speed_multiplier)
 
 class Hut(Classic):
-	name = "Hute"
+	name = None
 	amount = 0
 
 	image = None
 	shop_image = None
 	gradient_rect = [None, None, None]
 
-	desc_boost1 = "Flèche empoisonnée"
+	desc_boost1 = None
 	effect = Poison
 	EFFECT_LEVEL = [0,0,0,0,0,0,1,2,2,3,4]
 	CLASSIC_DURATION = [4000,4000,4000,4000,4000,4000,5000,7000,10000,14000,20000]
-	desc_boost2 = "Flèche dorée"
+	desc_boost2 = None
 	
 	SIZE = 2
 	ALLOWED_LEVEL = [1, 2, 4, 8, 15, 23, 38, 54, 72, 92, 116]
@@ -553,7 +582,7 @@ class Hut(Classic):
 			return [level, radius, damage, damage_per_sec]
 
 class Mortar(Classic):
-	name = "Mortier"
+	name = None
 	amount = 0
 
 	image = None
@@ -602,7 +631,7 @@ class Mortar(Classic):
 
 
 class Wizard(Classic):
-	name = "Sorcier"
+	name = None
 	amount = 0
 
 	image = None
@@ -648,7 +677,7 @@ class Wizard(Classic):
 
 
 class FireDiffuser(Classic):
-	name = "Lance-flammes"
+	name = None
 	effect = Fire
 	amount = 0
 
@@ -699,7 +728,7 @@ class FireDiffuser(Classic):
 			return [level, radius, effect_level, duration, dpt]
 
 class PoisonDiffuser(Classic):
-	name = "Diffuseur de poison"
+	name = None
 	effect = Poison
 	amount = 0
 
@@ -751,7 +780,7 @@ class PoisonDiffuser(Classic):
 
 
 class SlownessDiffuser(Classic):
-	name = "Ralentisseur"
+	name = None
 	effect = Slowness
 	amount = 0
 
@@ -804,7 +833,7 @@ class SlownessDiffuser(Classic):
 
 
 class Bank(Classic):
-	name = "Banque"
+	name = None
 	amount = 0
 	
 	image = None
@@ -845,7 +874,7 @@ class Bank(Classic):
 			return [level, earns, earns_per_sec, duration]
 
 class DamageBooster(Booster):
-	name = "Boosteur de dégâts"
+	name = None
 	amount = 0
 
 	image = None
@@ -881,7 +910,7 @@ class DamageBooster(Booster):
 			return [level, radius, multiplier]
 
 class RangeBooster(Booster):
-	name = "Boosteur de portée"
+	name = None
 	amount = 0
 
 	image = None
@@ -917,7 +946,7 @@ class RangeBooster(Booster):
 			return [level, radius, multiplier]
 
 class SpeedBooster(Booster):
-	name = "Boosteur de vitesse"
+	name = None
 	amount = 0
 
 	image = None

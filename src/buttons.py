@@ -18,6 +18,8 @@ class Button:
 
 	FONT = None
 	BOLD_FONT = None
+
+	CONFIRM_TEXT = None
 	
 	dict = {}
 	
@@ -43,6 +45,9 @@ class Button:
 	
 	def __repr__(self):
 		return self.name + ' ' + str(self.down) + ' ' + str(self.clickedUp)
+	
+	def setup_language(tr):
+		Button.CONFIRM_TEXT = tr.confirm
 	
 	def setup(self):
 		locked = pygame.Surface(self.size, pygame.SRCALPHA)
@@ -98,7 +103,7 @@ class Button:
 				if self.clickedUp:
 					self.confirmed = True
 				elif self.need_confirmation:
-					self.current_text = "Confirmer ?"
+					self.current_text = Button.CONFIRM_TEXT
 			self.hovered = hovered
 			self.down = hovered and (pressed or clicked_up)
 			

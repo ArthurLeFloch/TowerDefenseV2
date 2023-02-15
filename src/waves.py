@@ -58,7 +58,6 @@ class Wave:
 if __name__ == '__main__':
 	import matplotlib.pyplot as plt
 	max_wave = 1000
-	#test Knights
 	results = []
 	for w in range(max_wave):
 		current_wave = Wave().wave
@@ -69,7 +68,7 @@ if __name__ == '__main__':
 		results.append(s)
 	x = [k for k in range(max_wave)]
 	plt.plot(x, results)
-	plt.title("Nombre de 'Healer' par vagues")
+	plt.title("'Healer' count per wave")
 	plt.grid()
 	plt.show()
 

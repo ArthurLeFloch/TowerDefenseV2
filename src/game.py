@@ -15,7 +15,7 @@ from enemies import Dragon, Enemy, Goblin, Healer, HealZone, KingOfKnights, Knig
 from game_data import Game
 from towers import Tower
 from timer import Timer
-from waves import Wave
+from translation import Translation
 from logs import Logs
 from game_menu import Menu
 
@@ -23,6 +23,11 @@ def printf(args):
 	Logs.print('game', args)
 
 START = time.time()
+
+tr = Translation('EN')
+Tower.setup_language(tr)
+Menu.setup_language(tr)
+Button.setup_language(tr)
 
 # region SCREEN & FONTS SETUP
 pygame.init()
@@ -46,7 +51,7 @@ Game.LIFEMAX = 20
 
 FPS = 0
 clock = pygame.time.Clock()
-pygame.display.set_caption("Tower Defense V2")
+pygame.display.set_caption(tr.title)
 icon = pygame.image.load('images/others/icon.ico')
 pygame.display.set_icon(icon)
 
@@ -54,7 +59,6 @@ game = None
 current_menu = "menu"
 
 lifebar_total = Menu.LIFE_WIDTH + 2 * Menu.LIFE_PADDING
-Menu.SHOP_WIDTH = 280
 right_void = 8
 to_right = WIDTH-Menu.SHOP_WIDTH-lifebar_total-right_void
 Menu.SHOP_POS = (to_right + right_void, None)
@@ -136,9 +140,9 @@ title_height = int(20.*title_width/92.)
 title_pos = (WIDTH/2 - title_width/2, 40)
 title = glow(get_image((title_width, title_height), 'images/others/title.png'))
 
-Button("new_map", (WIDTH/2 - 150, HEIGHT/2), (300, 50), "Nouvelle partie", font_type=2)
-Button("browse_maps", (WIDTH/2 - 150, HEIGHT/2 + 100), (300, 50), "Parcourir les cartes", font_type=2) # ? Share maps ?
-Button("settings", (WIDTH/2 - 150, HEIGHT/2 + 200), (300, 50), "Paramètres", font_type=2)
+Button("new_map", (WIDTH/2 - 150, HEIGHT/2), (300, 50), tr.new_map, font_type=2)
+Button("browse_maps", (WIDTH/2 - 150, HEIGHT/2 + 100), (300, 50), tr.browse_maps, font_type=2) # ? Share maps ?
+Button("settings", (WIDTH/2 - 150, HEIGHT/2 + 200), (300, 50), tr.settings, font_type=2)
 
 tile_size = 28
 size = int(to_right/tile_size), int(HEIGHT/tile_size)
@@ -282,7 +286,7 @@ def show_debug_menu():
 		display_keys(texts, keys)
 	
 	if settings['dev']:
-		rendered_text = FONT.render('Dev.', WHITE)
+		rendered_text = FONT.render(tr.dev_mode, WHITE)
 		rect = (20, HEIGHT-40, *rendered_text[0].get_size())
 		new_rects.append(rect)
 		SCREEN.blit(rendered_text[0], (rect[0], rect[1]))
@@ -299,17 +303,17 @@ def update_upgrade_menu(pressed, clicked_up):
 			tower.chosen_boost = 2
 		if tower.chosen_boost != 0:
 			Button.delete('boost1', 'boost2')
-
-			text = f'Améliorer (-{cls.COST[tower.lvl+1]} $)'
+			formatted_cost = tr.money_format.format(money=cls.COST[tower.lvl+1])
+			text = tr.tower_upgrade.format(cost=formatted_cost)
 			is_locked = (game.coins < cls.COST[tower.lvl+1])
 			if game.lvl.level < cls.ALLOWED_LEVEL[tower.lvl+1]:
 				is_locked = True
-				text = f'Niveau {cls.ALLOWED_LEVEL[tower.lvl+1]} réquis'
+				text = tr.tower_required_level.format(level=cls.ALLOWED_LEVEL[tower.lvl+1])
 			Button('upgrade', *Menu.RECT_UPGRADE, text, locked=is_locked)
 
-			Button('delete', *Menu.RECT_DELETE, f'Détruire (+{cls.COST[tower.lvl]/5} $)', need_confirmation=True)
-			Button('stats', *Menu.RECT_STATS, f'Classique', locked = not selected_stats)
-			Button('bstats', *Menu.RECT_BSTATS, f'Boost', locked = selected_stats)
+			Button('delete', *Menu.RECT_DELETE, tr.tower_delete.format(refund=tower.deletion_refund), need_confirmation=True)
+			Button('stats', *Menu.RECT_STATS, tr.classic_panel, locked = not selected_stats)
+			Button('bstats', *Menu.RECT_BSTATS, tr.boost_panel, locked = selected_stats)
 
 	elif tower.lvl < cls.MAX_LEVEL and Button.clicked('upgrade'): # * Pass level ?
 		printf(f"{cls.__name__} upgraded")
@@ -317,21 +321,23 @@ def update_upgrade_menu(pressed, clicked_up):
 			tower.level_up()
 			game.update_left()
 			if tower.is_choosing_boost: # * Next level = choose boost
-				Button('boost1', *Menu.RECT_BOOST1, f'Sélectionner', need_confirmation=True)
-				Button('boost2', *Menu.RECT_BOOST2, f'Sélectionner', need_confirmation=True)
+				Button('boost1', *Menu.RECT_BOOST1, tr.boost_select, need_confirmation=True)
+				Button('boost2', *Menu.RECT_BOOST2, tr.boost_select, need_confirmation=True)
 				Button.delete('upgrade', 'delete', 'stats', 'bstats')
 			else: # * Next level = classic upgrade
 				if tower.lvl < cls.MAX_LEVEL:
 					is_locked = (game.coins < cls.COST[tower.lvl+1] or game.lvl.level < cls.ALLOWED_LEVEL[tower.lvl+1])
-					text = f'Améliorer (-{cls.COST[tower.lvl+1]} $)'
+					formatted_cost = tr.money_format.format(money=cls.COST[tower.lvl+1])
+					text = tr.tower_upgrade.format(cost=formatted_cost)
 					if game.lvl.level < cls.ALLOWED_LEVEL[tower.lvl+1]:
 						is_locked = True
-						text = f'Niveau {cls.ALLOWED_LEVEL[tower.lvl+1]} réquis'
+						text = tr.tower_required_level.format(level=cls.ALLOWED_LEVEL[tower.lvl+1])
 					Button.dict['upgrade'].set_text(text)
 					Button.set_lock('upgrade', is_locked)
 				else:
 					Button.delete('upgrade')
-				Button.dict['delete'].set_text(f'Détruire (+{cls.COST[tower.lvl]/5} $)')
+				formatted_cost = tr.money_format.format(money=tower.deletion_refund)
+				Button.dict['delete'].set_text(tr.tower_delete.format(refund=formatted_cost))
 			add_coins(-cls.COST[tower.lvl])
 
 	elif Button.confirmed('delete'):
@@ -339,7 +345,7 @@ def update_upgrade_menu(pressed, clicked_up):
 		success = game.set_tile(1, *tower.pos[0], width=cls.SIZE)
 		if success:
 			game.update_left()
-		add_coins(cls.COST[tower.lvl]/5)
+		add_coins(tower.deletion_refund)
 		Tower.remove(*tower.pos[0])
 		selected_tower = None
 		Button.delete('upgrade', 'delete', 'stats', 'bstats')
@@ -363,20 +369,22 @@ def setup_upgrade_buttons(selected_tower):
 	selected_stats = 0
 	Button.delete('upgrade', 'delete', 'boost1', 'boost2', 'stats', 'bstats')
 	if tower.is_choosing_boost:
-		Button('boost1', *Menu.RECT_BOOST1, f'Sélectionner', need_confirmation=True)
-		Button('boost2', *Menu.RECT_BOOST2, f'Sélectionner', need_confirmation=True)
+		Button('boost1', *Menu.RECT_BOOST1, tr.boost_select, need_confirmation=True)
+		Button('boost2', *Menu.RECT_BOOST2, tr.boost_select, need_confirmation=True)
 	else:
-		Button('stats', *Menu.RECT_STATS, f'Classique', locked = True)
-		Button('bstats', *Menu.RECT_BSTATS, f'Boost', locked = (tower.chosen_boost == 0))
+		Button('stats', *Menu.RECT_STATS, tr.classic_panel, locked = True)
+		Button('bstats', *Menu.RECT_BSTATS, tr.boost_panel, locked = (tower.chosen_boost == 0))
 
 		if tower.lvl < cls.MAX_LEVEL:
 			is_locked = (game.coins < cls.COST[tower.lvl+1] or game.lvl.level < cls.ALLOWED_LEVEL[tower.lvl+1])
-			text = f'Améliorer (-{cls.COST[tower.lvl+1]} $)'
+			formatted_cost = tr.money_format.format(money=cls.COST[tower.lvl+1])
+			text = tr.tower_upgrade.format(cost=formatted_cost)
 			if game.lvl.level < cls.ALLOWED_LEVEL[tower.lvl+1]:
-				text = f'Niveau {cls.ALLOWED_LEVEL[tower.lvl+1]} réquis'
+				text = tr.tower_required_level.format(level=cls.ALLOWED_LEVEL[tower.lvl+1])
 			Button('upgrade', *Menu.RECT_UPGRADE, text, locked=is_locked)
-
-		Button('delete', *Menu.RECT_DELETE, f'Détruire (+{cls.COST[tower.lvl]/5} $)', need_confirmation=True)
+		
+		formatted_cost = tr.money_format.format(money=tower.deletion_refund)
+		Button('delete', *Menu.RECT_DELETE, tr.tower_delete.format(refund=formatted_cost), need_confirmation=True)
 
 def show_selected_tower(xi, yi, pressed, clicked_up):
 	tower, cls = selected_tower
@@ -385,7 +393,9 @@ def show_selected_tower(xi, yi, pressed, clicked_up):
 		game.menu.update_description_boosts(SCREEN, cls.shop_image, cls.desc_boost1, cls.desc_boost2)
 	else:
 		if Button.exists('upgrade') and game.lvl.level >= cls.ALLOWED_LEVEL[tower.lvl+1]:
-			Button.dict['upgrade'].set_text(f'Améliorer (-{cls.COST[tower.lvl+1]} $)')
+			formatted_cost = tr.money_format.format(money=cls.COST[tower.lvl+1])
+			text = tr.tower_upgrade.format(cost=formatted_cost)
+			Button.dict['upgrade'].set_text(text)
 			is_locked = (cls.COST[tower.lvl + 1] > game.coins)
 			Button.set_lock('upgrade', is_locked)
 
@@ -403,9 +413,9 @@ def nav_game_to_menu():
 	settings['playing'] = True
 	ImageButton.delete_all()
 	Button.delete_all()
-	Button("new_map", (WIDTH/2 - 150, HEIGHT/2), (300, 50), "Nouvelle partie", font_type=2)
-	Button("browse_maps", (WIDTH/2 - 150, HEIGHT/2 + 100), (300, 50), "Parcourir les cartes", font_type=2)
-	Button("settings", (WIDTH/2 - 150, HEIGHT/2 + 200), (300, 50), "Paramètres", font_type=2)
+	Button("new_map", (WIDTH/2 - 150, HEIGHT/2), (300, 50), tr.new_map, font_type=2)
+	Button("browse_maps", (WIDTH/2 - 150, HEIGHT/2 + 100), (300, 50), tr.browse_maps, font_type=2)
+	Button("settings", (WIDTH/2 - 150, HEIGHT/2 + 200), (300, 50), tr.settings, font_type=2)
 
 def nav_menu_to_game():
 	global current_menu
@@ -449,8 +459,8 @@ def setup_info_bubble(text, value, pos):
 	text_width = rendered_text[0].get_width()
 	text_height = rendered_text[0].get_height()
 
-	rendered_value = GAMEFONT.render(f"{value} $", colors['life_ok'])
-	rendered_value2 = GAMEFONT.render(f"{value} $", colors['critic'])
+	rendered_value = GAMEFONT.render(tr.money_format.format(money=value), colors['life_ok'])
+	rendered_value2 = GAMEFONT.render(tr.money_format.format(money=value), colors['critic'])
 	value_width = rendered_value[0].get_width()
 	value_height = rendered_value[0].get_height()
 
@@ -594,10 +604,10 @@ while execute:
 			if event.type == MOUSEBUTTONUP:
 				if event.button == 1:
 					if game.selected_tiles != [] and not info_bubble:
-						text = "Débloquer pour "
+						text = tr.unlock_for
 						cost = game.selection_tile_cost()
 						if game.selection_type == 'tree':
-							text = "Supprimer pour "
+							text = tr.delete_for
 							cost = game.selection_tree_cost()
 						nx, ny = game.selected_tiles[-1]
 						info_x = nx*tile_size + game._xoffset + tile_size / 2

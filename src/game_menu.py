@@ -28,21 +28,6 @@ def get_image(size, place, glowing=False):
 		return glow(tmp)
 	return 
 
-def format_money(amount, separator=','):
-	amount = int(amount)
-	if amount == 0:
-		return "$ 0"
-	result = ""
-	i = 0
-	while amount != 0:
-		if i and i % 3 == 0:
-			result = separator + result
-		number = amount % 10
-		amount = amount // 10
-		result = str(number) + result
-		i += 1
-	return "$ " + result
-
 def is_on_rect(pos, rect):
 	# Rect : top left x,y and width, height
 	x, y = pos
@@ -66,6 +51,8 @@ class Menu:
 	LEVEL_WIDTH = None
 	LEVEL_HEIGHT = 90
 
+	LEVEL_TEXT = None
+
 	LEVEL_ICON_WIDTH = 50
 	LEVEL_ICON_HEIGHT = 50
 
@@ -84,6 +71,8 @@ class Menu:
 	COIN_WIDTH = None
 	COIN_HEIGHT = 70
 
+	COIN_TEXT = None
+
 	COIN_ICON_WIDTH = 50
 	COIN_ICON_HEIGHT = 48
 
@@ -96,6 +85,8 @@ class Menu:
 	WAVE_WIDTH = None
 	WAVE_HEIGHT = 60
 
+	WAVE_TEXT = None
+
 	RECT_WAVE_PAUSE = None
 
 	# Setting up SPEED layout
@@ -106,6 +97,8 @@ class Menu:
 
 	SPEED_WIDTH = None
 	SPEED_HEIGHT = 40
+
+	SPEED_TEXT = None
 
 	RECT_SPEED_UP = None
 	RECT_SPEED_DOWN = None
@@ -130,7 +123,7 @@ class Menu:
 	SHOP_HOR_MARGIN = 4
 	SHOP_VER_MARGIN = 4
 
-	SHOP_WIDTH = None
+	SHOP_WIDTH = 300
 	SHOP_HEIGHT = None
 	
 	SHOP_MAX_TAB = None
@@ -146,6 +139,9 @@ class Menu:
 
 	RECT_BOOST1 = None
 	RECT_BOOST2 = None
+
+	BOOST_TEXT = None
+	BOOST_NEXT_TEXT = None
 
 	BOOST_POS = None
 
@@ -173,6 +169,13 @@ class Menu:
 		self.setup()
 	
 	#region SETUP
+	def setup_language(tr):
+		Menu.SPEED_TEXT = tr.speed
+		Menu.LEVEL_TEXT = tr.level
+		Menu.WAVE_TEXT = tr.wave
+		Menu.BOOST_TEXT = tr.choose_boost
+		Menu.COIN_TEXT = tr.money_format
+		Menu.BOOST_NEXT_TEXT = tr.tower_desc_special_boost
 	
 	def setup(self):
 		self.setup_constants()
@@ -261,6 +264,21 @@ class Menu:
 
 	#endregion
 
+	def format_money(amount, separator=','):
+		amount = int(amount)
+		if amount == 0:
+			return "0"
+		result = ""
+		i = 0
+		while amount != 0:
+			if i and i % 3 == 0:
+				result = separator + result
+			number = amount % 10
+			amount = amount // 10
+			result = str(number) + result
+			i += 1
+		return Menu.COIN_TEXT.format(money=result)
+
 	#region LEVEL
 
 	def setup_level(self):
@@ -296,7 +314,7 @@ class Menu:
 	def update_val_level(self, new):
 		if self.val_level != new:
 			self.val_level = new
-			tmp = Menu.BOLD.render(f"Niveau {self.val_level}", WHITE)
+			tmp = Menu.BOLD.render(Menu.LEVEL_TEXT.format(level=self.val_level), WHITE)
 			x, y = self.level_textpos
 			width, height = tmp[0].get_size()
 			self.level_text_pos = (x - width, y - height/2)
@@ -339,7 +357,7 @@ class Menu:
 	def update_val_coin(self, new):
 		if self.val_coin != new:
 			self.val_coin = new
-			tmp = Menu.BOLD.render(format_money(self.val_coin), WHITE)
+			tmp = Menu.BOLD.render(Menu.format_money(self.val_coin), WHITE)
 			x, y = self.coin_textpos
 			width, height = tmp[0].get_size()
 			self.coin_text_pos = (x - width, y - height/2)
@@ -372,7 +390,7 @@ class Menu:
 			color = WHITE
 			if self.val_wave % 5 == 0:
 				color = (240, 20, 20)
-			tmp = Menu.BOLD.render(f"Vague n° {self.val_wave}", color)
+			tmp = Menu.BOLD.render(Menu.WAVE_TEXT.format(wave=self.val_wave), color)
 			x, y = self.wave_textpos
 			width, height = tmp[0].get_size()
 			self.wave_text_pos = (x - width, y - height/2)
@@ -395,7 +413,7 @@ class Menu:
 	def update_val_speed(self, new):
 		if self.val_speed != new:
 			self.val_speed = new
-			tmp = Menu.FONT.render(f"Vitesse : {self.val_speed}", WHITE)
+			tmp = Menu.FONT.render(Menu.SPEED_TEXT.format(speed=self.val_speed), WHITE)
 			x, y = self.speed_textpos
 			width, height = tmp[0].get_size()
 			self.speed_text_pos = (x - width/2, y - height/2)
@@ -499,7 +517,7 @@ class Menu:
 		x1, y1 = Menu.BOOST_POS
 		result.blit(self.boost_options, (x1 - Menu.SHOP_POS[0], y1 - Menu.SHOP_POS[1]))
 
-		txt = "Veuillez choisir un BOOST :"
+		txt = Menu.BOOST_TEXT
 		txt_im = Menu.FONT.render(txt, WHITE)
 		w = txt_im[0].get_width()
 		pos = Menu.SHOP_WIDTH / 2 - w / 2, y + 30
@@ -586,7 +604,7 @@ class Menu:
 		self.upgrade_can_afford = upgrade_can_afford.convert_alpha()
 		self.upgrade_cant_afford = upgrade_cant_afford.convert_alpha()
 
-		text = "+ BOOST Spécial"
+		text = Menu.BOOST_NEXT_TEXT
 		default = Menu.FONT.render(text, (255, 180, 0))
 		rect = (Menu.SHOP_POS[0] + x, Menu.SHOP_POS[1] + y + 30 * (k + 2) + 50)
 

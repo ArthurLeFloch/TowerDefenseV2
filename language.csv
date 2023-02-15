@@ -1,0 +1,51 @@
+Resource ID,FR,EN
+language,Français,English
+title,Tower Defense V2,Tower Defense V2
+new_map,Nouvelle carte,New map
+browse_maps,Parcourir les cartes,Browse maps
+settings,Paramètres,Settings
+tower_upgrade,Améliorer (- {cost}),Upgrade (- {cost})
+tower_delete,Détruire (+ {refund}),Destroy (+ {refund})
+tower_required_level,Niveau {level} réquis,Level {level} required
+tower_hut,Hûte,Hut
+tower_hut_boost1,Flèche empoisonnée,Poison arrow
+tower_hut_boost2,Flèche dorée,Golden arrow
+tower_mortar,Mortier,Mortar
+tower_wizard,Sorcier,Wizard
+tower_fire_diffuser,Lance-flamme,Flame thrower
+tower_poison_diffuser,Diffuseur de poison,Poison diffuser
+tower_slowness_diffuser,Ralentisseur,Freezer
+tower_bank,Banque,Bank
+tower_damage_booster,Boosteur de dégâts,Damage booster
+tower_range_booster,Boosteur de portée,Range booster
+tower_speed_booster,Boosteur de vitesse,Speed booster
+shop_required_level,Niv. {level},Lvl. {level}
+speed,Vitesse : {speed},Speed : {speed}
+level,Niveau : {level},Level {level}
+wave,Vague n° {wave},Wave n° {wave}
+choose_boost,Veuillez choisir un BOOST :,Please choose a BOOST :
+classic_panel,Classique,Classic
+boost_panel,Boost,Boost
+boost_select,Sélectionner,Select
+money_format,{money} $,$ {money}
+confirm,Confirmer ?,Confirm ?
+delete_for,Supprimer pour : ,Delete for : 
+unlock_for,Débloquer pour : ,Unlock for : 
+dev_mode,Dev.,Dev.
+tower_desc_level,Niveau,Level
+tower_desc_range,Portée,Range
+tower_desc_damage,Dégâts,Damages
+tower_desc_dps,Dégâts / sec.,Damages / sec.
+tower_desc_mul_damage,Mult. de dégâts,Damage mult.
+tower_desc_mul_range,Mult. de portée,Range mult.
+tower_desc_mul_speed,Mult. de vitesse,Speed mult.
+tower_desc_expl_range,Rayon d’explosion,Explosion range
+tower_desc_effect_level,Niveau de {effect_name},{effect_name} level
+tower_desc_effect_duration,Durée,Duration
+tower_desc_mul_slowness,Mul. de lenteur,Slowing rate
+tower_desc_effect_dps,Dégâts / sec.,Damages / sec.
+tower_desc_reload_speed,Durée action,Action duration
+tower_desc_earn_per_action,$ / action,$ / action
+tower_desc_earn_per_sec,$ / sec.,$ / sec.
+tower_desc_gold_touch,$ / tir,$ / hit
+tower_desc_special_boost,+ BOOST spécial,+ Special BOOST
