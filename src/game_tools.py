@@ -201,16 +201,16 @@ def generate_forest(game, x, y, empty_forest=False):
 				val = per[i, j]
 				if game[i][j] in [1, 2]:
 					new_value = 0
-					if val >= 0.93:
+					if val >= 0.95:
 						new_value = 1
-					elif 0.63 <= val <= 0.70:
+					elif 0.65 <= val <= 0.70:
 						new_value = 2
-					elif 0.30 <= val <= 0.37:
+					elif 0.30 <= val <= 0.35:
 						new_value = 3
-					elif 0 <= val <= 0.07:
+					elif 0 <= val <= 0.05:
 						new_value = 4
 
-					if rdi(0,5) in [0, 2, 5]:
+					if rdi(0, 10) > 6:
 						forests[i, j] = new_value
 	return forests
 
