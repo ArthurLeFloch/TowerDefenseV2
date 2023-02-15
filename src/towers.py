@@ -312,21 +312,21 @@ class Tower:
 
 		EnemyEffect.update()
 		Tower.looked = None
-
-		if logic_update:
-			for cls in Tower.subclasses:
-				for tower in Tower.dict[cls.__name__]:
-					if selected:
-						if selected in tower.pos:
-							Tower.looked = tower, cls
-					elif (xc, yc) in tower.pos:
-						Tower.looked = tower, cls
+		
+		for cls in Tower.subclasses:
+			for tower in Tower.dict[cls.__name__]:
+				if selected in tower.pos:
+					Tower.looked = tower, cls
+				elif (xc, yc) in tower.pos:
+					Tower.looked = tower, cls
+				
+				if logic_update:
 					tower.on_update()
+				
+				if update_game_screen:
+					tower.display(GAME_SCREEN)
 		
 		if update_game_screen:
-			for cls in Tower.subclasses:
-				for tower in Tower.dict[cls.__name__]:
-					tower.display(GAME_SCREEN)
 			Tower.new_rects.append((0, 0, *GAME_SCREEN.get_size()))
 			SCREEN.blit(GAME_SCREEN, (0, 0))
 		
