@@ -267,7 +267,7 @@ class Menu:
 	def format_money(amount, separator=','):
 		amount = int(amount)
 		if amount == 0:
-			return "0"
+			return Menu.COIN_TEXT.format(money=0)
 		result = ""
 		i = 0
 		while amount != 0:
