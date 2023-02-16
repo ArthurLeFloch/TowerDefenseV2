@@ -981,5 +981,3 @@ class SpeedBooster(Booster):
 			multiplier = desc.speed_multiplier(self, upgrade)
 			return [level, radius, multiplier]
 
-Tower.setup_subclasses()
-Tower.setup_boosters()

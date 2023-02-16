@@ -25,16 +25,16 @@ game.py:
     ☐ Add alpha background to display settings (fps, ...)
     ☐ Add color theme more 'natural' ?
 
-    ☐ Give speed buttons to game_menu
+    ✔ Give speed buttons to game_menu @done(23-02-16 12:46)
 
     ✔ Keep track of updated rectangles to update faster @done(23-01-22 11:00)
 
-    ☐ Fix graphic bug when selecting + click on info_bubble
+    ✔ Fix graphic bug when selecting + click on info_bubble @done(23-02-16 12:46)
 
 enemies.py:
   ☐ Bubbles : effect indicators
 
-buttons.py:
+ui.py:
   ☐ Add functions to switch tower focus mode
   ☐ Image button to change tower focus type
 

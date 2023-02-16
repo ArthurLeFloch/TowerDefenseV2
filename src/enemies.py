@@ -641,5 +641,3 @@ class HealZone(Enemy):
 		rect = (self.x-self.radius, self.y-self.radius, *HealZone.range_im[self.corrupted].get_size())
 		Enemy.new_rects.append(rect)
 		SCREEN.blit(HealZone.range_im[self.corrupted], (rect[0], rect[1]))
-
-Enemy.setup_subclasses()

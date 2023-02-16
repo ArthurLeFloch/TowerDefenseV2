@@ -10,7 +10,7 @@ with contextlib.redirect_stdout(None):
 from pygame.locals import *
 import pygame.freetype
 
-from buttons import Button, ImageButton
+from ui import UI, Button, ImageButton
 from enemies import Dragon, Enemy, Goblin, Healer, HealZone, KingOfKnights, Knight, Giant
 from game_data import Game
 from towers import Tower
@@ -27,7 +27,12 @@ START = time.time()
 tr = Translation('EN')
 Tower.setup_language(tr)
 Menu.setup_language(tr)
-Button.setup_language(tr)
+UI.setup_language(tr)
+
+Tower.setup_subclasses()
+Tower.setup_boosters()
+Enemy.setup_subclasses()
+UI.setup_subclasses()
 
 # region SCREEN & FONTS SETUP
 pygame.init()
@@ -74,8 +79,9 @@ Menu.BOLD = BOLD
 Menu.FONT = GAMEFONT
 Tower.FONT = GAMEFONT2
 Tower.PRICE_FONT = FONT
-Button.FONT = GAMEFONT
-Button.BOLD_FONT = FONT
+
+UI.FONT = GAMEFONT
+UI.BOLD_FONT = FONT
 
 WHITE = (255, 255, 255)
 # endregion
@@ -291,11 +297,9 @@ def show_debug_menu():
 		new_rects.append(rect)
 		SCREEN.blit(rendered_text[0], (rect[0], rect[1]))
 
-def update_upgrade_menu(pressed, clicked_up):
+def update_upgrade_menu():
 	global selected_stats, selected_tower
 	tower, cls = selected_tower
-	Button.update(SCREEN, x, y, pressed, clicked_up)
-	
 	if tower.is_choosing_boost: # * Pass split level ?
 		if Button.confirmed('boost1'):
 			tower.chosen_boost = 1
@@ -311,10 +315,10 @@ def update_upgrade_menu(pressed, clicked_up):
 				text = tr.tower_required_level.format(level=cls.ALLOWED_LEVEL[tower.lvl+1])
 			Button('upgrade', *Menu.RECT_UPGRADE, text, locked=is_locked)
 
-			Button('delete', *Menu.RECT_DELETE, tr.tower_delete.format(refund=tower.deletion_refund), need_confirmation=True)
+			formatted_cost = tr.money_format.format(money=tower.deletion_refund)
+			Button('delete', *Menu.RECT_DELETE, tr.tower_delete.format(refund=formatted_cost), need_confirmation=True)
 			Button('stats', *Menu.RECT_STATS, tr.classic_panel, locked = not selected_stats)
 			Button('bstats', *Menu.RECT_BSTATS, tr.boost_panel, locked = selected_stats)
-
 	elif tower.lvl < cls.MAX_LEVEL and Button.clicked('upgrade'): # * Pass level ?
 		printf(f"{cls.__name__} upgraded")
 		if game.coins >= cls.COST[tower.lvl+1]:
@@ -332,12 +336,12 @@ def update_upgrade_menu(pressed, clicked_up):
 					if game.lvl.level < cls.ALLOWED_LEVEL[tower.lvl+1]:
 						is_locked = True
 						text = tr.tower_required_level.format(level=cls.ALLOWED_LEVEL[tower.lvl+1])
-					Button.dict['upgrade'].set_text(text)
+					Button.set_text('upgrade', text)
 					Button.set_lock('upgrade', is_locked)
 				else:
 					Button.delete('upgrade')
 				formatted_cost = tr.money_format.format(money=tower.deletion_refund)
-				Button.dict['delete'].set_text(tr.tower_delete.format(refund=formatted_cost))
+				Button.set_text('delete', tr.tower_delete.format(refund=formatted_cost))
 			add_coins(-cls.COST[tower.lvl])
 
 	elif Button.confirmed('delete'):
@@ -386,7 +390,7 @@ def setup_upgrade_buttons(selected_tower):
 		formatted_cost = tr.money_format.format(money=tower.deletion_refund)
 		Button('delete', *Menu.RECT_DELETE, tr.tower_delete.format(refund=formatted_cost), need_confirmation=True)
 
-def show_selected_tower(xi, yi, pressed, clicked_up):
+def show_selected_tower():
 	tower, cls = selected_tower
 
 	if tower.is_choosing_boost:
@@ -395,7 +399,7 @@ def show_selected_tower(xi, yi, pressed, clicked_up):
 		if Button.exists('upgrade') and game.lvl.level >= cls.ALLOWED_LEVEL[tower.lvl+1]:
 			formatted_cost = tr.money_format.format(money=cls.COST[tower.lvl+1])
 			text = tr.tower_upgrade.format(cost=formatted_cost)
-			Button.dict['upgrade'].set_text(text)
+			Button.set_text('upgrade', text)
 			is_locked = (cls.COST[tower.lvl + 1] > game.coins)
 			Button.set_lock('upgrade', is_locked)
 
@@ -404,8 +408,6 @@ def show_selected_tower(xi, yi, pressed, clicked_up):
 		can_afford = (tower.lvl == cls.MAX_LEVEL or (cls.COST[tower.lvl + 1] <= game.coins and game.lvl.level >= cls.ALLOWED_LEVEL[tower.lvl+1]))
 		desc = tower.description_texts(hovered, selected_stats)
 		game.menu.update_upgrade_texts(SCREEN, cls.shop_image, desc, can_afford, is_boost_preview)
-		
-	Button.update(SCREEN, xi, yi, pressed, clicked_up)
 
 def nav_game_to_menu():
 	global current_menu
@@ -516,8 +518,6 @@ execute = True
 was_possible = None
 
 current_click_state = False
-last_click_state = False
-clicked_up = False
 
 while execute:
 	SCREEN.fill(colors['background'])
@@ -530,10 +530,6 @@ while execute:
 	pressed_keys = pygame.key.get_pressed()
 	pressed_mouse_keys = pygame.mouse.get_pressed()
 	current_click_state = pressed_mouse_keys[0]
-	if not current_click_state and last_click_state:
-		clicked_up = True
-	else:
-		clicked_up = False
 		
 	if current_menu == "menu":
 		SCREEN.blit(title, title_pos)
@@ -556,7 +552,7 @@ while execute:
 				if event.key == K_ESCAPE:
 					execute = False
 					
-		Button.update(SCREEN, x, y, current_click_state, clicked_up)
+		UI.update(SCREEN, x, y, current_click_state)
 		
 	elif current_menu == "game":
 		xc, yc = int((x-game._xoffset)/tile_size), int((y-game._yoffset)/tile_size)		
@@ -578,13 +574,17 @@ while execute:
 							remove_info_bubble()
 						elif not info_bubble:
 							game.init_selection(xc, yc)
+						tmp = selected_tower
 						selected_tower = Tower.get(xc, yc)
 						if selected_tower:
 							printf("Selected tower")
 							remove_info_bubble()
 							setup_upgrade_buttons(selected_tower)
+						elif tmp:
+							Button.delete('upgrade', 'delete', 'boost1', 'boost2', 'stats', 'bstats')
 					elif x > Menu.SHOP_POS[0]:
-						remove_info_bubble()
+						if info_bubble:
+							remove_info_bubble()
 						if not selected_tower:
 							if drag_n_dropping:
 								drag_n_dropping = None
@@ -621,10 +621,11 @@ while execute:
 								game.update_left()
 								add_coins(-drag_n_dropping.COST[0])
 						drag_n_dropping = None
-						remove_info_bubble()
+						if info_bubble:
+							remove_info_bubble()
 					elif selected_tower:
-						update_upgrade_menu(current_click_state, clicked_up)
-						remove_info_bubble()
+						if info_bubble:
+							remove_info_bubble()
 
 			if event.type == KEYDOWN:
 				if event.key == K_ESCAPE:
@@ -733,9 +734,25 @@ while execute:
 		game.menu.update(SCREEN)
 
 		if selected_tower:
-			show_selected_tower(x, y, current_click_state, clicked_up)
+			show_selected_tower()
 		else:
 			game.menu.update_shop(SCREEN)
+		
+		if game.selected_tiles and info_bubble and current_menu == 'game':
+			cost = 0
+			images, pos = info_bubble
+
+			if game.selection_type == 'tree':
+				cost = game.selection_tree_cost()
+			elif game.selection_type == 'tile':
+				cost = game.selection_tile_cost()
+			new_rects.append((*pos, *images[game.coins < cost].get_size()))
+			SCREEN.blit(images[game.coins < cost], pos)
+		
+		UI.update(SCREEN, x, y, current_click_state)
+
+		if selected_tower and UI.clicked_up:
+			update_upgrade_menu()
 
 		if drag_n_dropping:
 			cls = drag_n_dropping
@@ -762,14 +779,10 @@ while execute:
 
 		if game.selected_tiles and info_bubble and current_menu == 'game':
 			cost = 0
-			images, pos = info_bubble
-
 			if game.selection_type == 'tree':
 				cost = game.selection_tree_cost()
 			elif game.selection_type == 'tile':
 				cost = game.selection_tile_cost()
-			new_rects.append((*pos, *images[game.coins < cost].get_size()))
-			SCREEN.blit(images[game.coins < cost], pos)
 
 			if not ImageButton.exists('confirm'):
 				info_x, info_y = info_bubble[1]
@@ -833,8 +846,6 @@ while execute:
 		prev_xc, prev_yc = xc, yc
 
 		game.update_level()
-
-		ImageButton.update(SCREEN, x, y, current_click_state, clicked_up)
 
 		if game.need_tile_update:
 			pygame.display.update()
