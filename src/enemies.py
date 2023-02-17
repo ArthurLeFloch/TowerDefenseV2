@@ -491,7 +491,7 @@ class Dragon(Enemy):
 	def __init__(self, corrupted=0):
 		Enemy.__init__(self, corrupted=corrupted)
 
-	def custom_update(self, SCREEN):
+	def custom_update(self):
 		xb, yb = Enemy.end
 		if abs(xb-self.x) + abs(yb-self.y) > self.v:
 			self.vx, self.vy = _vect((self.x, self.y), Enemy.end)
