@@ -236,6 +236,7 @@ class Button(UI):
 		UI.dict[Button.__name__][name].default_text = value
 	
 	def on_logic_update(self, x, y):
+		self.confirmed = False
 		if self.need_confirmation and self.clickedUp:
 			if not self.first_click:
 				self.first_click = True
@@ -244,6 +245,8 @@ class Button(UI):
 				self.first_click = False
 				self.confirmed = True
 				self.current_text = self.default_text
+				if UI.focused == self:
+					UI.focused = None
 
 		if UI.clicked_up and not self.hovered:
 			self.first_click = False
@@ -537,6 +540,8 @@ if __name__ == '__main__':
 		
 		if Button.clicked('test4'):
 			printf("Button 4 clicked")
+		if Button.confirmed('test4'):
+			printf("Button 4 confirmed")
 		
 		if Button.clicked('locked'):
 			printf("Locked button pushed")
