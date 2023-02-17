@@ -37,7 +37,7 @@ class UI:
 
 	clicked_down_pos = None
 
-	def __init__(self, name, pos, size, hoverable, locked, text="ERROR", font_type=1):
+	def __init__(self, name, pos, size, hoverable, locked, text="ERROR", font_type=1, on_click=None, on_confirm=None):
 		cls = self.__class__
 
 		self.pos = pos
@@ -55,6 +55,11 @@ class UI:
 			self.default_text = text
 			self.current_text = text
 			self.font = self.adapted_font(font_type)
+		
+		if on_click:
+			self.on_click = on_click
+		if on_confirm:
+			self.on_confirm = on_confirm
 
 		UI.dict[cls.__name__][name] = self
 
@@ -124,6 +129,14 @@ class UI:
 	def confirmed(cls, name):
 		return UI.dict[cls.__name__][name].confirmed
 	
+	@classmethod
+	def set_on_click(cls, name, function):
+		UI.dict[cls.__name__][name].on_click = function
+	
+	@classmethod
+	def set_on_confirm(cls, name, function):
+		UI.dict[cls.__name__][name].on_click = function
+	
 	def update_mouse_state(pressed):
 		UI.clicked_down = (pressed and not UI.last_clicked)
 		UI.clicked_up = (not pressed and UI.last_clicked)
@@ -134,12 +147,13 @@ class UI:
 		UI.new_rects = []
 		UI.update_mouse_state(pressed)
 		for cls in UI.__subclasses__():
-			for key in UI.dict[cls.__name__]:
-				self = UI.dict[cls.__name__][key]
-				self.mouse_relative_update(x, y)
-				if hasattr(self, 'on_logic_update'):
-					self.on_logic_update(x, y)
-				self.on_update(window)
+			for key in list(UI.dict[cls.__name__]): # Force copy of dictionary, prevent error "RuntimeError: dictionary changed size during iteration"
+				if key in UI.dict[cls.__name__]: # UI elements could be deleted using the on_click method, prevent crash
+					self = UI.dict[cls.__name__][key]
+					self.mouse_relative_update(x, y)
+					if hasattr(self, 'on_logic_update'):
+						self.on_logic_update(x, y)
+					self.on_update(window)
 		if not UI.last_clicked:
 			if not (hasattr(UI.focused, 'need_confirmation') and UI.focused.need_confirmation and UI.focused.down):
 				UI.focused = None
@@ -189,6 +203,12 @@ class UI:
 			self.down = False
 			self.clickedUp = False
 			self.hovered = False
+		
+		if self.clickedUp and hasattr(self, 'on_click'):
+			self.on_click()
+		
+		if hasattr(self, 'confirmed') and self.confirmed and hasattr(self, 'on_confirm'):
+			self.on_confirm()
 
 
 class Button(UI):
@@ -199,8 +219,8 @@ class Button(UI):
 
 	CONFIRM_TEXT = None
 	
-	def __init__(self, name, pos=(100, 100), size=(300, 40), text="ERROR", hoverable=True, locked=False, font_type=1, need_confirmation=False):
-		UI.__init__(self, name, pos, size, hoverable, locked, text, font_type)
+	def __init__(self, name, pos=(100, 100), size=(300, 40), text="ERROR", hoverable=True, locked=False, font_type=1, need_confirmation=False, on_click=None, on_confirm=None):
+		UI.__init__(self, name, pos, size, hoverable, locked, text, font_type, on_click, on_confirm)
 		self.im_dict = self.setup()
 		self.need_confirmation = need_confirmation
 		self.confirmed = False
@@ -290,8 +310,8 @@ class ImageButton(UI):
 	extern_thickness = 1
 	intern_thickness = 2
 	
-	def __init__(self, name, image_path, pos=(100, 100), size=(50, 50), hoverable=True, locked=False):
-		UI.__init__(self, name, pos, size, hoverable, locked)
+	def __init__(self, name, image_path, pos=(100, 100), size=(50, 50), hoverable=True, locked=False, on_click=None):
+		UI.__init__(self, name, pos, size, hoverable, locked, on_click=on_click)
 		thickness, intern_thickness, extern_thickness = ImageButton.thickness, ImageButton.intern_thickness, ImageButton.extern_thickness
 		self.im_size = (size[0]-2*thickness - 2*intern_thickness - 2*extern_thickness, size[1]-2*thickness - 2*intern_thickness -2*extern_thickness)
 		self.mask_size = (size[0]-2*thickness-2*extern_thickness, size[1]-2*thickness-2*extern_thickness)
@@ -363,10 +383,11 @@ class Slider(UI):
 	thickness = 3
 
 	COLOR_TICK = (200, 200, 200)
+	COLOR_LOCKED_TICK = (20, 28, 36)
 	COLOR_BUTTON_SIDE = (10, 14, 18)
 	
-	def __init__(self, name, pos, size, hoverable=True, locked=False, default_value=7, values=(0, 10), ticks=0):
-		UI.__init__(self, name, pos, size, hoverable, locked)
+	def __init__(self, name, pos, size, hoverable=True, locked=False, default_value=7, values=(0, 10), ticks=0, on_click=None, on_confirm=None):
+		UI.__init__(self, name, pos, size, hoverable, locked, on_click=on_click, on_confirm=on_confirm)
 		self.a, self.b = values
 		if ticks > 0:
 			self.step = (self.b - self.a) / ticks
@@ -378,7 +399,7 @@ class Slider(UI):
 		self.im_dict = self.setup()
 		
 	def on_value_changed(self):
-		pass
+		printf(f"New value : {self.value}")
 	
 	def setup(self):
 		thickness = Slider.thickness
@@ -411,11 +432,18 @@ class Slider(UI):
 		x = x - self.pos[0] - self.radius - Slider.thickness
 		x = x * (self.b - self.a) / self.center_width
 		val = x + self.a
-		self.value = self.nearest_value(val)
+
+		previous = self.value
+		if self.ticks:
+			self.value = min(self.b, max(self.a, self.nearest_value(val)))
+		else:
+			self.value = min(self.b, max(self.a, val))
+		if self.value != previous:
+			self.on_value_changed()
 	
 	def nearest_value(self, val):
-		k = max(0, round((val - self.a) / self.step))
-		return min(self.a + k * self.step, self.b)
+		k = round((val - self.a) / self.step)
+		return self.a + k * self.step
 	
 	def get_button_pos(self):
 		val = (self.value - self.a) * self.center_width / (self.b - self.a)
@@ -423,6 +451,8 @@ class Slider(UI):
 	
 	def get_tick_color(self, tick_value):
 		if tick_value > self.value:
+			if self.locked:
+				return Slider.COLOR_LOCKED_TICK
 			return Slider.COLOR_TICK
 		else:
 			return self.get_second_color()
@@ -514,6 +544,9 @@ if __name__ == '__main__':
 
 	Slider('test', (20, 20), (300, 28), ticks=10)
 	Slider('test2', (20, 68), (300, 28), ticks=20)
+	Slider('test3', (20, 116), (300, 28))
+	Slider('test4', (20, 164), (300, 28), locked=True)
+	Slider('test4', (20, 164), (300, 28), locked=True, ticks=10)
 
 	Button.CONFIRM_TEXT = "Confirm ?"
 

@@ -300,72 +300,20 @@ def show_debug_menu():
 def update_upgrade_menu():
 	global selected_stats, selected_tower
 	tower, cls = selected_tower
-	if tower.is_choosing_boost: # * Pass split level ?
-		if Button.confirmed('boost1'):
-			tower.chosen_boost = 1
-		elif Button.confirmed('boost2'):
-			tower.chosen_boost = 2
-		if tower.chosen_boost != 0:
-			Button.delete('boost1', 'boost2')
-			formatted_cost = tr.money_format.format(money=cls.COST[tower.lvl+1])
-			text = tr.tower_upgrade.format(cost=formatted_cost)
-			is_locked = (game.coins < cls.COST[tower.lvl+1])
-			if game.lvl.level < cls.ALLOWED_LEVEL[tower.lvl+1]:
-				is_locked = True
-				text = tr.tower_required_level.format(level=cls.ALLOWED_LEVEL[tower.lvl+1])
-			Button('upgrade', *Menu.RECT_UPGRADE, text, locked=is_locked)
+	if tower.is_choosing_boost and tower.chosen_boost != 0:
+		Button.delete('boost1', 'boost2')
+		formatted_cost = tr.money_format.format(money=cls.COST[tower.lvl+1])
+		text = tr.tower_upgrade.format(cost=formatted_cost)
+		is_locked = (game.coins < cls.COST[tower.lvl+1])
+		if game.lvl.level < cls.ALLOWED_LEVEL[tower.lvl+1]:
+			is_locked = True
+			text = tr.tower_required_level.format(level=cls.ALLOWED_LEVEL[tower.lvl+1])
+		Button('upgrade', *Menu.RECT_UPGRADE, text, locked=is_locked, on_click=on_tower_upgrade_click)
 
-			formatted_cost = tr.money_format.format(money=tower.deletion_refund)
-			Button('delete', *Menu.RECT_DELETE, tr.tower_delete.format(refund=formatted_cost), need_confirmation=True)
-			Button('stats', *Menu.RECT_STATS, tr.classic_panel, locked = not selected_stats)
-			Button('bstats', *Menu.RECT_BSTATS, tr.boost_panel, locked = selected_stats)
-	elif tower.lvl < cls.MAX_LEVEL and Button.clicked('upgrade'): # * Pass level ?
-		printf(f"{cls.__name__} upgraded")
-		if game.coins >= cls.COST[tower.lvl+1]:
-			tower.level_up()
-			game.update_left()
-			if tower.is_choosing_boost: # * Next level = choose boost
-				Button('boost1', *Menu.RECT_BOOST1, tr.boost_select, need_confirmation=True)
-				Button('boost2', *Menu.RECT_BOOST2, tr.boost_select, need_confirmation=True)
-				Button.delete('upgrade', 'delete', 'stats', 'bstats')
-			else: # * Next level = classic upgrade
-				if tower.lvl < cls.MAX_LEVEL:
-					is_locked = (game.coins < cls.COST[tower.lvl+1] or game.lvl.level < cls.ALLOWED_LEVEL[tower.lvl+1])
-					formatted_cost = tr.money_format.format(money=cls.COST[tower.lvl+1])
-					text = tr.tower_upgrade.format(cost=formatted_cost)
-					if game.lvl.level < cls.ALLOWED_LEVEL[tower.lvl+1]:
-						is_locked = True
-						text = tr.tower_required_level.format(level=cls.ALLOWED_LEVEL[tower.lvl+1])
-					Button.set_text('upgrade', text)
-					Button.set_lock('upgrade', is_locked)
-				else:
-					Button.delete('upgrade')
-				formatted_cost = tr.money_format.format(money=tower.deletion_refund)
-				Button.set_text('delete', tr.tower_delete.format(refund=formatted_cost))
-			add_coins(-cls.COST[tower.lvl])
-
-	elif Button.confirmed('delete'):
-		printf(f"{cls.__name__} deleted")
-		success = game.set_tile(1, *tower.pos[0], width=cls.SIZE)
-		if success:
-			game.update_left()
-		add_coins(tower.deletion_refund)
-		Tower.remove(*tower.pos[0])
-		selected_tower = None
-		Button.delete('upgrade', 'delete', 'stats', 'bstats')
-
-	elif Button.clicked('stats'):
-		printf("Switched view to classic stats")
-		Button.lock('stats')
-		if tower.chosen_boost:
-			Button.unlock('bstats')
-		selected_stats = 0
-	
-	elif Button.clicked('bstats'):
-		printf("Switched view to boost stats")
-		Button.unlock('stats')
-		Button.lock('bstats')
-		selected_stats = 1
+		formatted_cost = tr.money_format.format(money=tower.deletion_refund)
+		Button('delete', *Menu.RECT_DELETE, tr.tower_delete.format(refund=formatted_cost), need_confirmation=True, on_confirm=on_tower_delete_confirmed)
+		Button('stats', *Menu.RECT_STATS, tr.classic_panel, locked = not selected_stats, on_click=on_tower_stats_click)
+		Button('bstats', *Menu.RECT_BSTATS, tr.boost_panel, locked = selected_stats, on_click=on_tower_boosted_stats_click)
 
 def setup_upgrade_buttons(selected_tower):
 	tower, cls = selected_tower
@@ -373,11 +321,11 @@ def setup_upgrade_buttons(selected_tower):
 	selected_stats = 0
 	Button.delete('upgrade', 'delete', 'boost1', 'boost2', 'stats', 'bstats')
 	if tower.is_choosing_boost:
-		Button('boost1', *Menu.RECT_BOOST1, tr.boost_select, need_confirmation=True)
-		Button('boost2', *Menu.RECT_BOOST2, tr.boost_select, need_confirmation=True)
+		Button('boost1', *Menu.RECT_BOOST1, tr.boost_select, need_confirmation=True, on_confirm=on_boost1_confirm)
+		Button('boost2', *Menu.RECT_BOOST2, tr.boost_select, need_confirmation=True, on_confirm=on_boost2_confirm)
 	else:
-		Button('stats', *Menu.RECT_STATS, tr.classic_panel, locked = True)
-		Button('bstats', *Menu.RECT_BSTATS, tr.boost_panel, locked = (tower.chosen_boost == 0))
+		Button('stats', *Menu.RECT_STATS, tr.classic_panel, locked = True, on_click=on_tower_stats_click)
+		Button('bstats', *Menu.RECT_BSTATS, tr.boost_panel, locked = (tower.chosen_boost == 0), on_click=on_tower_boosted_stats_click)
 
 		if tower.lvl < cls.MAX_LEVEL:
 			is_locked = (game.coins < cls.COST[tower.lvl+1] or game.lvl.level < cls.ALLOWED_LEVEL[tower.lvl+1])
@@ -385,10 +333,10 @@ def setup_upgrade_buttons(selected_tower):
 			text = tr.tower_upgrade.format(cost=formatted_cost)
 			if game.lvl.level < cls.ALLOWED_LEVEL[tower.lvl+1]:
 				text = tr.tower_required_level.format(level=cls.ALLOWED_LEVEL[tower.lvl+1])
-			Button('upgrade', *Menu.RECT_UPGRADE, text, locked=is_locked)
+			Button('upgrade', *Menu.RECT_UPGRADE, text, locked=is_locked, on_click=on_tower_upgrade_click)
 		
 		formatted_cost = tr.money_format.format(money=tower.deletion_refund)
-		Button('delete', *Menu.RECT_DELETE, tr.tower_delete.format(refund=formatted_cost), need_confirmation=True)
+		Button('delete', *Menu.RECT_DELETE, tr.tower_delete.format(refund=formatted_cost), need_confirmation=True, on_confirm=on_tower_delete_confirmed)
 
 def show_selected_tower():
 	tower, cls = selected_tower
@@ -423,9 +371,9 @@ def nav_menu_to_game():
 	global current_menu
 	current_menu = "game"
 
-	ImageButton('speed_up', "images/others/speed_up.png", *Menu.RECT_SPEED_UP)
-	ImageButton('speed_down', "images/others/speed_down.png", *Menu.RECT_SPEED_DOWN)
-	ImageButton('play_pause', "images/others/pause.ppm", *Menu.RECT_WAVE_PAUSE)
+	ImageButton('speed_up', "images/others/speed_up.png", *Menu.RECT_SPEED_UP, on_click=on_speed_up_click)
+	ImageButton('speed_down', "images/others/speed_down.png", *Menu.RECT_SPEED_DOWN, on_click=on_speed_down_click)
+	ImageButton('play_pause', "images/others/pause.ppm", *Menu.RECT_WAVE_PAUSE, on_click=on_play_pause_click)
 
 	ImageButton.unlock('speed_up')
 	ImageButton.unlock('speed_down')
@@ -504,6 +452,129 @@ def remove_info_bubble():
 	game.update_left()
 
 	ImageButton.delete('confirm', 'cancel')
+
+def on_play_pause_click():
+	settings['playing'] = not settings['playing']
+	if settings['playing']:
+		Timer.resume()
+		ImageButton.set_button_image('play_pause', "images/others/pause.ppm")
+	else:
+		Timer.pause()
+		ImageButton.set_button_image('play_pause', "images/others/play.ppm")
+
+def on_speed_up_click():
+	if settings['speed'] < 5:
+		change_speed(settings['speed']+1)
+	if settings["speed"] == 5:
+		ImageButton.lock('speed_up')
+	ImageButton.unlock('speed_down')
+
+def on_speed_down_click():
+	if settings['speed'] > 1:
+		change_speed(settings['speed']-1)
+	if settings["speed"] == 1:
+		ImageButton.lock('speed_down')
+	ImageButton.unlock('speed_up')
+
+def on_confirm_click():	
+	if game.selection_type == 'tree':
+		cost = game.selection_tree_cost()
+		if cost <= game.coins:
+			game.delete_selected_trees()
+			add_coins(-cost)
+	elif game.selection_type == 'tile':
+		cost = game.selection_tile_cost()
+		if cost <= game.coins:
+			game.add_selected_tiles()
+			add_coins(-cost)
+	remove_info_bubble()
+
+def on_cancel_click():
+	remove_info_bubble()
+
+def on_tower_upgrade_click():
+	global selected_tower
+	tower, cls = selected_tower
+	if tower.lvl < cls.MAX_LEVEL and game.coins >= cls.COST[tower.lvl+1]:
+		printf(f"{cls.__name__} upgraded")
+		tower.level_up()
+		game.update_left()
+		if tower.is_choosing_boost: # * Next level = choose boost
+			Button('boost1', *Menu.RECT_BOOST1, tr.boost_select, need_confirmation=True, on_confirm=on_boost1_confirm)
+			Button('boost2', *Menu.RECT_BOOST2, tr.boost_select, need_confirmation=True, on_confirm=on_boost2_confirm)
+			Button.delete('upgrade', 'delete', 'stats', 'bstats')
+		else: # * Next level = classic upgrade
+			if tower.lvl < cls.MAX_LEVEL:
+				is_locked = (game.coins < cls.COST[tower.lvl+1] or game.lvl.level < cls.ALLOWED_LEVEL[tower.lvl+1])
+				formatted_cost = tr.money_format.format(money=cls.COST[tower.lvl+1])
+				text = tr.tower_upgrade.format(cost=formatted_cost)
+				if game.lvl.level < cls.ALLOWED_LEVEL[tower.lvl+1]:
+					is_locked = True
+					text = tr.tower_required_level.format(level=cls.ALLOWED_LEVEL[tower.lvl+1])
+				Button.set_text('upgrade', text)
+				Button.set_lock('upgrade', is_locked)
+			else:
+				Button.delete('upgrade')
+			formatted_cost = tr.money_format.format(money=tower.deletion_refund)
+			Button.set_text('delete', tr.tower_delete.format(refund=formatted_cost))
+		add_coins(-cls.COST[tower.lvl])
+
+def on_tower_delete_confirmed():
+	global selected_tower
+	tower, cls = selected_tower
+	printf(f"{cls.__name__} deleted")
+	success = game.set_tile(1, *tower.pos[0], width=cls.SIZE)
+	if success:
+		game.update_left()
+	add_coins(tower.deletion_refund)
+	Tower.remove(*tower.pos[0])
+	selected_tower = None
+	Button.delete('upgrade', 'delete', 'stats', 'bstats')
+
+def on_tower_stats_click():
+	global selected_tower, selected_stats
+	tower, cls = selected_tower
+	printf("Switched view to classic stats")
+	Button.lock('stats')
+	if tower.chosen_boost:
+		Button.unlock('bstats')
+	selected_stats = 0
+
+def on_tower_boosted_stats_click():
+	global selected_stats
+	printf("Switched view to boost stats")
+	Button.unlock('stats')
+	Button.lock('bstats')
+	selected_stats = 1
+
+def on_boost_selected():
+	global selected_tower
+	tower, cls = selected_tower
+	Button.delete('boost1', 'boost2')
+	formatted_cost = tr.money_format.format(money=cls.COST[tower.lvl+1])
+	text = tr.tower_upgrade.format(cost=formatted_cost)
+	is_locked = (game.coins < cls.COST[tower.lvl+1])
+	if game.lvl.level < cls.ALLOWED_LEVEL[tower.lvl+1]:
+		is_locked = True
+		text = tr.tower_required_level.format(level=cls.ALLOWED_LEVEL[tower.lvl+1])
+	Button('upgrade', *Menu.RECT_UPGRADE, text, locked=is_locked, on_click=on_tower_upgrade_click)
+
+	formatted_cost = tr.money_format.format(money=tower.deletion_refund)
+	Button('delete', *Menu.RECT_DELETE, tr.tower_delete.format(refund=formatted_cost), need_confirmation=True, on_confirm=on_tower_delete_confirmed)
+	Button('stats', *Menu.RECT_STATS, tr.classic_panel, locked = not selected_stats, on_click=on_tower_stats_click)
+	Button('bstats', *Menu.RECT_BSTATS, tr.boost_panel, locked = selected_stats, on_click=on_tower_boosted_stats_click)
+
+def on_boost1_confirm():
+	global selected_tower
+	tower, cls = selected_tower
+	tower.chosen_boost = 1
+	on_boost_selected()
+
+def on_boost2_confirm():
+	global selected_tower
+	tower, cls = selected_tower
+	tower.chosen_boost = 2
+	on_boost_selected()
 
 info_bubble = None
 info_rect = None
@@ -748,6 +819,13 @@ while execute:
 				cost = game.selection_tile_cost()
 			new_rects.append((*pos, *images[game.coins < cost].get_size()))
 			SCREEN.blit(images[game.coins < cost], pos)
+
+			if not ImageButton.exists('confirm'):
+				info_x, info_y = info_bubble[1]
+				ImageButton('confirm', 'images/others/confirm.png', (info_x + 10, info_y + 10), size=(40, 40), on_click=on_confirm_click)
+				ImageButton('cancel', 'images/others/delete.png', (info_x + info_bubble[0][0].get_width() - 50, info_y + 10), size=(40, 40), on_click=on_cancel_click)
+			
+			ImageButton.set_lock('confirm', (game.coins < cost))
 		
 		UI.update(SCREEN, x, y, current_click_state)
 
@@ -777,37 +855,6 @@ while execute:
 
 		show_debug_menu()
 
-		if game.selected_tiles and info_bubble and current_menu == 'game':
-			cost = 0
-			if game.selection_type == 'tree':
-				cost = game.selection_tree_cost()
-			elif game.selection_type == 'tile':
-				cost = game.selection_tile_cost()
-
-			if not ImageButton.exists('confirm'):
-				info_x, info_y = info_bubble[1]
-				ImageButton('confirm', 'images/others/confirm.png', (info_x + 10, info_y + 10), size=(40, 40))
-				ImageButton('cancel', 'images/others/delete.png', (info_x + info_bubble[0][0].get_width() - 50, info_y + 10), size=(40, 40))
-			
-			if ImageButton.ex_and_clicked('cancel'):
-				remove_info_bubble()
-			
-			if ImageButton.exists('confirm'):
-				ImageButton.set_lock('confirm', (game.coins < cost))
-			
-			if ImageButton.ex_and_clicked('confirm'):
-				if game.selection_type == 'tree':
-					cost = game.selection_tree_cost()
-					if cost <= game.coins:
-						game.delete_selected_trees()
-						add_coins(-cost)
-				elif game.selection_type == 'tile':
-					cost = game.selection_tile_cost()
-					if cost <= game.coins:
-						game.add_selected_tiles()
-						add_coins(-cost)
-				remove_info_bubble()
-
 		if Enemy.last_earned != 0:
 			add_coins(Enemy.last_earned)
 		
@@ -819,29 +866,6 @@ while execute:
 		Enemy.last_earned = 0
 		Enemy.last_killed = 0
 		Enemy.last_lost_life = 0
-
-		if ImageButton.ex_and_clicked('speed_up'):
-			if settings['speed'] < 5:
-				change_speed(settings['speed']+1)
-			if settings["speed"] == 5:
-				ImageButton.lock('speed_up')
-			ImageButton.unlock('speed_down')
-		
-		if ImageButton.ex_and_clicked('speed_down'):
-			if settings['speed'] > 1:
-				change_speed(settings['speed']-1)
-			if settings["speed"] == 1:
-				ImageButton.lock('speed_down')
-			ImageButton.unlock('speed_up')
-		
-		if ImageButton.ex_and_clicked('play_pause'):
-			settings['playing'] = not settings['playing']
-			if settings['playing']:
-				Timer.resume()
-				ImageButton.set_button_image('play_pause', "images/others/pause.ppm")
-			else:
-				Timer.pause()
-				ImageButton.set_button_image('play_pause', "images/others/play.ppm")
 
 		prev_xc, prev_yc = xc, yc
 
