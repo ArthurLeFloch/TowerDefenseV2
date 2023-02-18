@@ -713,6 +713,8 @@ if __name__ == '__main__':
 
 	UI.FONT = pygame.freetype.Font("fonts/MonoglycerideDemiBold.ttf", 24)
 	UI.BOLD_FONT = pygame.freetype.Font("fonts/MonoglycerideBold.ttf", 19)
+	UI.LITTLE_FONT = pygame.freetype.Font("fonts/MonoglycerideDemiBold.ttf", 21)
+	UI.SMALLEST_FONT = pygame.freetype.Font("fonts/MonoglycerideDemiBold.ttf", 18)
 
 	SCREEN = pygame.display.set_mode((WIDTH, HEIGHT))
 	pygame.display.set_caption("UI Elements Tests")
