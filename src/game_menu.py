@@ -123,7 +123,7 @@ class Menu:
 	SHOP_HOR_MARGIN = 4
 	SHOP_VER_MARGIN = 4
 
-	SHOP_WIDTH = 300
+	SHOP_WIDTH = None
 	SHOP_HEIGHT = None
 	
 	SHOP_MAX_TAB = None
@@ -201,6 +201,14 @@ class Menu:
 		self.update_wave(screen)
 		self.update_speed(screen)
 		self.update_lifebar(screen)
+	
+	def update_texts(self, tr):
+		Menu.setup_language(tr)
+		self.update_val_level(self.val_level, True)
+		self.update_val_coin(self.val_coin, True)
+		self.update_val_wave(self.val_wave, True)
+		self.update_val_speed(self.val_speed, True)
+		self.setup_shop()
 
 	def setup_constants(self):
 		width, height = self.size
@@ -242,9 +250,11 @@ class Menu:
 		Menu.SHOP_ELEMENT_HEIGHT = max_height / Menu.SHOP_ITEM_PER_TAB
 		Menu.SHOP_MAX_TAB = len(Tower.subclasses) / Menu.SHOP_ITEM_PER_TAB
 
-		Menu.SHOP_POS = (x + Menu.SHOP_HOR_MARGIN, y + Menu.LEVEL_HEIGHT + 2 * Menu.LEVEL_VER_MARGIN + Menu.COIN_HEIGHT + 2 * Menu.COIN_VER_MARGIN + Menu.WAVE_HEIGHT + 2 * Menu.WAVE_VER_MARGIN + Menu.SPEED_HEIGHT + 2 * Menu.SPEED_VER_MARGIN + Menu.SHOP_VER_MARGIN)
+		if Menu.SHOP_POS[1] == None:
+			Menu.SHOP_POS = (x + Menu.SHOP_HOR_MARGIN, y + Menu.LEVEL_HEIGHT + 2 * Menu.LEVEL_VER_MARGIN + Menu.COIN_HEIGHT + 2 * Menu.COIN_VER_MARGIN + Menu.WAVE_HEIGHT + 2 * Menu.WAVE_VER_MARGIN + Menu.SPEED_HEIGHT + 2 * Menu.SPEED_VER_MARGIN + Menu.SHOP_VER_MARGIN)
 		Menu.SHOP_HEIGHT = Menu.SHOP_ITEM_PER_TAB * Menu.SHOP_ELEMENT_HEIGHT + 6
-		Menu.SHOP_WIDTH = width - Menu.LIFE_WIDTH - 2 * Menu.LIFE_HOR_MARGIN - 2 * Menu.SHOP_HOR_MARGIN
+		if not Menu.SHOP_WIDTH:
+			Menu.SHOP_WIDTH = width - Menu.LIFE_WIDTH - 2 * Menu.LIFE_HOR_MARGIN - 2 * Menu.SHOP_HOR_MARGIN
 
 		# Setting up RECT constants
 		swidth = Menu.SHOP_WIDTH
@@ -311,8 +321,8 @@ class Menu:
 	def update_level_text(self, screen):
 		screen.blit(self.level_text, self.level_text_pos)
 	
-	def update_val_level(self, new):
-		if self.val_level != new:
+	def update_val_level(self, new, force=False):
+		if self.val_level != new or force:
 			self.val_level = new
 			tmp = Menu.BOLD.render(Menu.LEVEL_TEXT.format(level=self.val_level), WHITE)
 			x, y = self.level_textpos
@@ -354,8 +364,8 @@ class Menu:
 	def update_coin_text(self, screen):
 		screen.blit(self.coin_text, self.coin_text_pos)
 	
-	def update_val_coin(self, new):
-		if self.val_coin != new:
+	def update_val_coin(self, new, force=False):
+		if self.val_coin != new or force:
 			self.val_coin = new
 			tmp = Menu.BOLD.render(Menu.format_money(self.val_coin), WHITE)
 			x, y = self.coin_textpos
@@ -384,8 +394,8 @@ class Menu:
 	def update_wave_text(self, screen):
 		screen.blit(self.wave_text, self.wave_text_pos)
 	
-	def update_val_wave(self, new):
-		if self.val_wave != new:
+	def update_val_wave(self, new, force=False):
+		if self.val_wave != new or force:
 			self.val_wave = new
 			color = WHITE
 			if self.val_wave % 5 == 0:
@@ -410,8 +420,8 @@ class Menu:
 	def update_speed_text(self, screen):
 		screen.blit(self.speed_text, self.speed_text_pos)
 	
-	def update_val_speed(self, new):
-		if self.val_speed != new:
+	def update_val_speed(self, new, force=False):
+		if self.val_speed != new or force:
 			self.val_speed = new
 			tmp = Menu.FONT.render(Menu.SPEED_TEXT.format(speed=self.val_speed), WHITE)
 			x, y = self.speed_textpos
@@ -487,6 +497,7 @@ class Menu:
 	def setup_shop_items(self):
 		self.shop_first_item = 0
 		self.shop_item_count = len(Tower.subclasses)
+		self.shop_items = []
 		for cls in Tower.subclasses:
 			self.shop_items.append(cls.shop_item(Menu.SHOP_WIDTH, Menu.SHOP_ELEMENT_HEIGHT))
 

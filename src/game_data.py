@@ -3,10 +3,12 @@ import pygame
 import os
 import numpy as np
 from datetime import datetime
+import time
 
 from towers import Tower
 from enemies import Enemy
 from game_tools import generate, findpath
+from ui import ImageButton
 from chunks import Chunk
 from waves import Wave
 from logs import Logs
@@ -116,6 +118,9 @@ class Game:
 		self.set_level()
 		Wave.currentLevel = 0
 		self.new_wave()
+
+		self.spawn_time = None
+		self.wave_started = True
 		
 		Chunk.setup_array(*size)
 		
@@ -173,15 +178,38 @@ class Game:
 		self.life = max(0, self.life-value)
 		self.menu.update_val_life(self.life)
 	
-	def update_enemy_spawn(self):
-		if Enemy.amount == 0 and self.wave.length == 0:
-			self.new_wave()
-		elif self.wave.is_loaded and self.wave.length > 0:
+	def update_enemy_spawn(self, is_playing=True):
+		if Enemy.amount == 0 and not self.wave_started:
+			if Wave.auto_pause:
+				if is_playing:
+					self.wave_started = True
+					self.new_wave()
+				if not is_playing:
+					self.wave_started = False
+				ImageButton.simulate_click('play_pause')
+			elif Wave.wait_between_waves:
+				if is_playing and self.wave.length > 0:
+					self.wave_started = True
+					self.spawn_time = None
+				elif self.spawn_time and time.time()-self.spawn_time > Wave.wait_duration and not is_playing:
+					ImageButton.simulate_click('play_pause')
+					self.spawn_time = None
+					self.wave_started = True
+				elif not self.spawn_time:
+					self.spawn_time = time.time()
+					ImageButton.simulate_click('play_pause')
+					self.new_wave()
+			else:
+				self.wave_started = True
+				self.new_wave()
+		elif is_playing and self.wave.is_loaded and self.wave.length > 0:
 			self.wave.is_loaded.reset()
 			cls, corrupted = self.wave.wave[0]
 			cls(corrupted)
 			self.wave.wave.pop(0)
 			self.wave.length -= 1
+			if self.wave.length == 0:
+				self.wave_started = False
 	
 	def init_selection(self, xc, yc):
 		if 0 <= xc < self.n and 0 <= yc < self.m:

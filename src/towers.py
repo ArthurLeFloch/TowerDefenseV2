@@ -340,7 +340,7 @@ class Tower:
 		
 		for cls in Tower.subclasses:
 			for tower in Tower.dict[cls.__name__]:
-				if selected in tower.pos:
+				if selected and selected[0].pos[0] in tower.pos:
 					Tower.looked = tower, cls
 				elif (xc, yc) in tower.pos:
 					Tower.looked = tower, cls
@@ -355,12 +355,21 @@ class Tower:
 			Tower.new_rects.append((0, 0, *GAME_SCREEN.get_size()))
 			SCREEN.blit(GAME_SCREEN, (0, 0))
 		
-		if Tower.looked and show_range:
+		if selected:
+			tower, cls = selected
+			if hasattr(cls, "CLASSIC_RANGE"):
+				radius = tower.range
+				is_boosted = (tower.range_multiplier != 1)
+				range_im = getRangeIm(radius, boosted = is_boosted)
+				rect = (tower.center[0]-radius, tower.center[1]-radius, *range_im.get_size())
+				Tower.new_rects.append(rect)
+				SCREEN.blit(range_im, (rect[0], rect[1]))
+		elif Tower.looked and show_range:
 			tower,cls = Tower.looked
 			if hasattr(cls, "CLASSIC_RANGE"):
 				radius = tower.range
 				is_boosted = (tower.range_multiplier != 1)
-				range_im = getRangeIm(radius, boosted = is_boosted) if selected else getSimpleRangeIm(radius, boosted = is_boosted)
+				range_im = getSimpleRangeIm(radius, boosted = is_boosted)
 				rect = (tower.center[0]-radius, tower.center[1]-radius, *range_im.get_size())
 				Tower.new_rects.append(rect)
 				SCREEN.blit(range_im, (rect[0], rect[1]))
@@ -371,7 +380,9 @@ class Tower:
 		center = Tower.xoffset + tile_size * (xc + cls.SIZE/2), Tower.yoffset + tile_size * (yc + cls.SIZE/2)
 		if Tower.is_place_boosted(cls, *center) and is_valid == 1:
 			is_valid += 1
-		SCREEN.blit(cls.gradient_rect[is_valid], (xc * tile_size + Tower.xoffset - border_size, yc*tile_size + Tower.yoffset - border_size))
+		rect = (xc * tile_size + Tower.xoffset - border_size, yc*tile_size + Tower.yoffset - border_size, *cls.gradient_rect[is_valid].get_size())
+		Tower.new_rects.append(rect)
+		SCREEN.blit(cls.gradient_rect[is_valid], (rect[0], rect[1]))
 		if hasattr(cls, "CLASSIC_RANGE"):
 			boost = Tower.get_range_boost(cls, *center)
 			range = (cls.CLASSIC_RANGE[0]*boost + cls.SIZE/2) * Tower.tile_size

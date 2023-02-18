@@ -1,6 +1,7 @@
 import pygame
 from pygame.locals import *
 import pygame.freetype
+import types
 
 from logs import Logs
 
@@ -27,6 +28,8 @@ class UI:
 	COLOR_HOVERED = (93, 67, 0), (66, 47, 0), (50, 27, 0)
 	COLOR_CLASSIC = (90, 90, 90), (60, 60, 60), (30, 30, 30)
 
+	SMALLEST_FONT = None
+	LITTLE_FONT = None
 	FONT = None
 	BOLD_FONT = None
 
@@ -66,15 +69,21 @@ class UI:
 	def adapted_font(self, font_type):
 		if font_type == 1:
 			return UI.FONT
-		return UI.BOLD_FONT
+		elif font_type == 2:
+			return UI.BOLD_FONT
+		elif font_type == 3:
+			return UI.SMALLEST_FONT
+		elif font_type == 0:
+			return UI.LITTLE_FONT
 
 	@classmethod
 	def setup_subclasses(cls):
 		for subcls in cls.__subclasses__():
 			cls.dict[subcls.__name__] = {}
 	
-	def setup_language(tr):
+	def set_language(tr):
 		Button.CONFIRM_TEXT = tr.confirm
+		UI.translate()
 	
 	@classmethod
 	def delete(cls, *names):
@@ -92,6 +101,10 @@ class UI:
 			if UI.dict[cls.__name__][name] == UI.focused:
 				UI.focused = None
 		UI.dict[cls.__name__] = {}
+	
+	def delete_all():
+		for cls in UI.__subclasses__():
+			UI.dict[cls.__name__] = {}
 	
 	@classmethod
 	def exists(cls, name):
@@ -158,24 +171,31 @@ class UI:
 			if not (hasattr(UI.focused, 'need_confirmation') and UI.focused.need_confirmation and UI.focused.down):
 				UI.focused = None
 	
-	def get_color_from_code(self, val):
+	def translate():
+		for cls in UI.__subclasses__():
+			for key in UI.dict[cls.__name__].keys():
+				self = UI.dict[cls.__name__][key]
+				if hasattr(self, 'on_translate'):
+					self.on_translate()
+	
+	def get_color_from_code(self, val, is_down=False):
 		if self.locked:
 			return UI.COLOR_LOCKED[val]
-		elif self.down:
+		elif self.down or is_down:
 			return UI.COLOR_DOWN[val]
 		elif self.hovered:
 			return UI.COLOR_HOVERED[val]
 		else:
 			return UI.COLOR_CLASSIC[val]
 	
-	def get_third_color(self):
-		return self.get_color_from_code(2)
+	def get_third_color(self, is_down=False):
+		return self.get_color_from_code(2, is_down)
 	
-	def get_second_color(self):
-		return self.get_color_from_code(1)
+	def get_second_color(self, is_down=False):
+		return self.get_color_from_code(1, is_down)
 
-	def get_first_color(self):
-		return self.get_color_from_code(0)
+	def get_first_color(self, is_down=False):
+		return self.get_color_from_code(0, is_down)
 	
 	def mouse_relative_update(self, x, y):
 		self.clickedUp = False
@@ -219,12 +239,14 @@ class Button(UI):
 
 	CONFIRM_TEXT = None
 	
-	def __init__(self, name, pos=(100, 100), size=(300, 40), text="ERROR", hoverable=True, locked=False, font_type=1, need_confirmation=False, on_click=None, on_confirm=None):
+	def __init__(self, name, pos=(100, 100), size=(300, 40), text="ERROR", hoverable=True, locked=False, font_type=0, need_confirmation=False, on_click=None, on_confirm=None, on_translate=None):
 		UI.__init__(self, name, pos, size, hoverable, locked, text, font_type, on_click, on_confirm)
 		self.im_dict = self.setup()
 		self.need_confirmation = need_confirmation
 		self.confirmed = False
 		self.first_click = False
+		if on_translate:
+			self.on_translate = types.MethodType(on_translate, self)
 	
 	def setup(self):
 		thickness = Button.thickness
@@ -252,8 +274,16 @@ class Button(UI):
 		return {'locked':locked, 'down':down, 'hovered':hovered, 'classic':classic}
 	
 	def set_text(name, value):
-		UI.dict[Button.__name__][name].current_text = value
-		UI.dict[Button.__name__][name].default_text = value
+		self = UI.dict[Button.__name__][name]
+		self.current_text = value
+		self.default_text = value
+	
+	def change_text(self, value):
+		self.current_text = value
+		self.default_text = value
+	
+	def simulate_click(name):
+		UI.dict[Button.__name__][name].on_click()
 	
 	def on_logic_update(self, x, y):
 		self.confirmed = False
@@ -316,6 +346,9 @@ class ImageButton(UI):
 		self.im_size = (size[0]-2*thickness - 2*intern_thickness - 2*extern_thickness, size[1]-2*thickness - 2*intern_thickness -2*extern_thickness)
 		self.mask_size = (size[0]-2*thickness-2*extern_thickness, size[1]-2*thickness-2*extern_thickness)
 		self.set_image(image_path)
+	
+	def simulate_click(name):
+		UI.dict[ImageButton.__name__][name].on_click()
 	
 	def set_image(self, image_path):
 		self.image = get_image(self.im_size, image_path)
@@ -386,20 +419,25 @@ class Slider(UI):
 	COLOR_LOCKED_TICK = (20, 28, 36)
 	COLOR_BUTTON_SIDE = (10, 14, 18)
 	
-	def __init__(self, name, pos, size, hoverable=True, locked=False, default_value=7, values=(0, 10), ticks=0, on_click=None, on_confirm=None):
-		UI.__init__(self, name, pos, size, hoverable, locked, on_click=on_click, on_confirm=on_confirm)
-		self.a, self.b = values
+	def __init__(self, name, pos, size, hoverable=True, locked=False, default_value=7, values=(0, 10), ticks=0, step=None, on_value_changed=None):
+		UI.__init__(self, name, pos, size, hoverable, locked)
+		if on_value_changed:
+			self.on_value_changed = on_value_changed
+		self.a, self.b = float(values[0]), float(values[1])
 		if ticks > 0:
 			self.step = (self.b - self.a) / ticks
+		elif step:
+			self.step = step
+		else:
+			self.step = None
 		self.radius = (size[1] - 2 * Slider.thickness) / 2
 		self.center_width = self.size[0] - 2 * self.radius - 2 * Slider.thickness
-		self.default_value = default_value
-		self.value = default_value
 		self.ticks = ticks
 		self.im_dict = self.setup()
-		
-	def on_value_changed(self):
-		printf(f"New value : {self.value}")
+		if values[0] > default_value or values[1] < default_value:
+			default_value = values[1]
+		self.default_value = default_value
+		self.value = default_value
 	
 	def setup(self):
 		thickness = Slider.thickness
@@ -436,10 +474,22 @@ class Slider(UI):
 		previous = self.value
 		if self.ticks:
 			self.value = min(self.b, max(self.a, self.nearest_value(val)))
+		elif self.step:
+			self.value = min(self.b, max(self.a, self.nearest_value(val)))
 		else:
 			self.value = min(self.b, max(self.a, val))
-		if self.value != previous:
-			self.on_value_changed()
+		if self.value != previous and hasattr(self, 'on_value_changed'):
+			self.on_value_changed(self.value)
+		
+	def set_value(name, val):
+		for key in UI.dict[Slider.__name__]:
+			if key == name:
+				self = UI.dict[Slider.__name__][name]
+				current_val = self.value
+				if current_val != val:
+					self.value = val
+					self.on_value_changed(val)
+				break
 	
 	def nearest_value(self, val):
 		k = round((val - self.a) / self.step)
@@ -497,31 +547,160 @@ class Slider(UI):
 class CheckBox(UI):
 
 	has_text = True
+
+	thickness = 3
+	border_radius = 4
+
+	COLOR_BUTTON_SIDE = (10, 14, 18)
 	
-	def __init__(self, name, pos, size, text="ERROR", hoverable=True, locked=False, font_type=1):
-		UI.__init__(self, name, pos, size, hoverable, locked, text, font_type)
+	def __init__(self, name, pos, width=30, is_checked=False, hoverable=True, locked=False, linked=None, on_check=None, on_uncheck=None, on_action=None):
+		UI.__init__(self, name, pos, (width, width), hoverable, locked)
+		self.checked = is_checked
+		if on_check:
+			self.on_check = on_check
+		if on_uncheck:
+			self.on_uncheck = on_uncheck
+		if on_action:
+			self.on_action = on_action
+		if linked == None:
+			self.linked = None
+		else:
+			tmp = linked.copy()
+			tmp.remove(name)
+			self.linked = tmp
+		self.is_linked = (linked != None)
+		self.im_dict = self.setup()
+	
+	def uncheck_others(self):
+		for name in self.linked:
+			UI.dict[CheckBox.__name__][name].checked = False
+	
+	def every_link_uncheck(self):
+		for name in self.linked:
+			if UI.dict[CheckBox.__name__][name].checked:
+				return False
+		return True
+
+	def update_linked(self): # Cannot be unchecked if it's the only one checked, and checking it uncheck the others
+		if self.checked:
+			self.uncheck_others()
+		elif self.every_link_uncheck():
+			self.checked = True
 	
 	def setup(self):
-		pass
+		thickness = CheckBox.thickness
+		radius = CheckBox.border_radius
+		size = self.size
 
-	def on_update(self, window, x, y, pressed, clicked_up):
-		pass
+		locked = pygame.Surface(self.size, pygame.SRCALPHA)
+		pygame.draw.rect(locked, UI.COLOR_LOCKED[0], (0, 0, *size), border_radius=radius)
+		pygame.draw.rect(locked, UI.COLOR_LOCKED[1], (thickness, thickness, size[0] - 2 * thickness, size[1] - 2 * thickness), border_radius=radius)
+
+		down = pygame.Surface(self.size, pygame.SRCALPHA)
+		pygame.draw.rect(down, UI.COLOR_DOWN[0], (0, 0, *size), border_radius=radius)
+		pygame.draw.rect(down, UI.COLOR_DOWN[1], (thickness, thickness, size[0] - 2 * thickness, size[1] - 2 * thickness), border_radius=radius)
+
+		hovered = pygame.Surface(self.size, pygame.SRCALPHA)
+		pygame.draw.rect(hovered, UI.COLOR_HOVERED[0], (0, 0, *size), border_radius=radius)
+		pygame.draw.rect(hovered, UI.COLOR_HOVERED[1], (thickness, thickness, size[0] - 2 * thickness, size[1] - 2 * thickness), border_radius=radius)
+
+		classic = pygame.Surface(self.size, pygame.SRCALPHA)
+		pygame.draw.rect(classic, UI.COLOR_CLASSIC[0], (0, 0, *size), border_radius=radius)
+		pygame.draw.rect(classic, UI.COLOR_CLASSIC[1], (thickness, thickness, size[0] - 2 * thickness, size[1] - 2 * thickness), border_radius=radius)
+
+		locked = locked.convert_alpha()
+		down = down.convert_alpha()
+		hovered = hovered.convert_alpha()
+		classic = classic.convert_alpha()
+		return {'locked':locked, 'down':down, 'hovered':hovered, 'classic':classic}
+
+	def on_logic_update(self, x, y):
+		if self.clickedUp and UI.focused == self:
+			self.checked = not self.checked
+			if self.is_linked:
+				self.update_linked()
+			if self.checked and hasattr(self, 'on_check'):
+				self.on_check()
+			if not self.checked and hasattr(self, 'on_uncheck'):
+				self.on_uncheck()
+			if hasattr(self, 'on_action'):
+				self.on_action(self.checked)
+	
+	def uncheck(name):
+		UI.dict[CheckBox.__name__][name].checked = False
+	
+	def check(name):
+		UI.dict[CheckBox.__name__][name].checked = True
+	
+	def checked(name):
+		return UI.dict[CheckBox.__name__][name].checked
+	
+	def link(name, others):
+		UI.dict[CheckBox.__name__][name].links = others
+
+	def on_update(self, window):
+		rect = (*self.pos, *self.size)
+		UI.new_rects.append(rect)
+
+		if self.locked:
+			window.blit(self.im_dict['locked'], (rect[0], rect[1]))
+		elif self.down or self.checked:
+			window.blit(self.im_dict['down'], (rect[0], rect[1]))
+		elif self.hovered and self.hoverable:
+			window.blit(self.im_dict['hovered'], (rect[0], rect[1]))
+		else:
+			window.blit(self.im_dict['classic'], (rect[0], rect[1]))
+		
+		if self.checked:
+			pygame.draw.circle(window, CheckBox.COLOR_BUTTON_SIDE, (self.pos[0] + self.size[0]/2, self.pos[1] + self.size[0]/2), (self.size[0] - 2 * CheckBox.thickness - 4) / 2)
+			pygame.draw.circle(window, self.get_first_color(is_down=self.checked), (self.pos[0] + self.size[0]/2, self.pos[1] + self.size[0]/2), (self.size[0] - 2 * CheckBox.thickness - 4) / 2 - 2)
 
 
-class RadioButton(UI):
-
+class Text(UI):
 	has_text = True
+
+	thickness = 3
+	border_radius = 4
+
+	COLOR_BUTTON_SIDE = (10, 14, 18)
 	
-	def __init__(self, name, pos, size, text="ERROR", hoverable=True, locked=False, font_type=1):
-		UI.__init__(self, name, pos, size, hoverable, locked, text, font_type)
+	def __init__(self, name, pos, text="ERROR", font_type=0, color=None, centered=(False, False), on_translate=None):
+		self.font_type=font_type
+		self.text = text
+		if font_type == 2 and not color:
+			self.color = (230, 230, 230)
+		elif not color:
+			self.color = (200, 200, 200)
+		else:
+			self.color = color
+		self.text_im = self.setup() # size depends on rendered text
+		UI.__init__(self, name, pos, self.size, font_type=font_type, hoverable=False, locked=False)
+		if on_translate:
+			self.on_translate = types.MethodType(on_translate, self)
+		self.centered = centered
 	
 	def setup(self):
-		pass
-
-	def on_update(self, window, x, y, pressed, clicked_up):
-		pass
-
-
+		rendered = self.adapted_font(self.font_type).render(self.text, self.color)
+		self.size = rendered[0].get_size()
+		return rendered[0]
+	
+	def set_text(name, new_text):
+		self = UI.dict[Text.__name__][name]
+		self.text = new_text
+		self.text_im = self.setup()
+	
+	def change_text(self, new_text):
+		self.text = new_text
+		self.text_im = self.setup()
+	
+	def on_update(self, window):
+		x, y = self.pos
+		if self.centered[0]:
+			x -= self.size[0] / 2
+		if self.centered[1]:
+			y -= self.size[1] / 2
+		
+		window.blit(self.text_im, (x, y))
 
 if __name__ == '__main__':
 	UI.setup_subclasses()
@@ -546,7 +725,7 @@ if __name__ == '__main__':
 	Slider('test2', (20, 68), (300, 28), ticks=20)
 	Slider('test3', (20, 116), (300, 28))
 	Slider('test4', (20, 164), (300, 28), locked=True)
-	Slider('test4', (20, 164), (300, 28), locked=True, ticks=10)
+	Slider('test5', (20, 212), (300, 28), locked=True, ticks=10)
 
 	Button.CONFIRM_TEXT = "Confirm ?"
 
@@ -555,6 +734,13 @@ if __name__ == '__main__':
 	Button('test3', (340, 140), text="Small font", font_type=0)
 	Button('test4', (340, 200), text="Need confirmation", need_confirmation=True)
 	Button('locked', (340, 260), text="Locked", locked=True)
+
+	CheckBox('test', (20, 260))
+	CheckBox('test2', (70, 260), is_checked=True)
+	CheckBox('test3', (120, 260), locked=True)
+	CheckBox('test4', (170, 260), is_checked=True, locked=True)
+
+	Text('test', (20, 300), "Text")
 
 	while execute:
 		SCREEN.fill((10, 14, 18))

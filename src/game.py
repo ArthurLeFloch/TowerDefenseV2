@@ -10,10 +10,11 @@ with contextlib.redirect_stdout(None):
 from pygame.locals import *
 import pygame.freetype
 
-from ui import UI, Button, ImageButton
+from ui import UI, Button, ImageButton, Slider, CheckBox, Text
 from enemies import Dragon, Enemy, Goblin, Healer, HealZone, KingOfKnights, Knight, Giant
 from game_data import Game
 from towers import Tower
+from waves import Wave
 from timer import Timer
 from translation import Translation
 from logs import Logs
@@ -24,15 +25,15 @@ def printf(args):
 
 START = time.time()
 
-tr = Translation('EN')
-Tower.setup_language(tr)
-Menu.setup_language(tr)
-UI.setup_language(tr)
-
 Tower.setup_subclasses()
 Tower.setup_boosters()
 Enemy.setup_subclasses()
 UI.setup_subclasses()
+
+tr = Translation('EN')
+Tower.setup_language(tr)
+Menu.setup_language(tr)
+UI.set_language(tr)
 
 # region SCREEN & FONTS SETUP
 pygame.init()
@@ -54,7 +55,6 @@ WIDTH, HEIGHT = SCREEN.get_size()
 Menu.LIFEMAX = 20
 Game.LIFEMAX = 20
 
-FPS = 0
 clock = pygame.time.Clock()
 pygame.display.set_caption(tr.title)
 icon = pygame.image.load('images/others/icon.ico')
@@ -63,6 +63,7 @@ pygame.display.set_icon(icon)
 game = None
 current_menu = "menu"
 
+Menu.SHOP_WIDTH = 290
 lifebar_total = Menu.LIFE_WIDTH + 2 * Menu.LIFE_PADDING
 right_void = 8
 to_right = WIDTH-Menu.SHOP_WIDTH-lifebar_total-right_void
@@ -70,9 +71,11 @@ Menu.SHOP_POS = (to_right + right_void, None)
 
 GAME_SCREEN = pygame.Surface((to_right, HEIGHT))
 
+LARGE_BOLD = pygame.freetype.Font("fonts/MonoglycerideBold.ttf", 34)
 FONT = pygame.freetype.Font("fonts/MonoglycerideDemiBold.ttf", 24)
 BOLD = pygame.freetype.Font("fonts/MonoglycerideBold.ttf", 27)
 GAMEFONT = pygame.freetype.Font("fonts/MonoglycerideBold.ttf", 19)
+BOLD2 = pygame.freetype.Font("fonts/MonoglycerideBold.ttf", 24)
 GAMEFONT2 = pygame.freetype.Font("fonts/MonoglycerideDemiBold.ttf", 18)
 
 Menu.BOLD = BOLD
@@ -80,10 +83,14 @@ Menu.FONT = GAMEFONT
 Tower.FONT = GAMEFONT2
 Tower.PRICE_FONT = FONT
 
-UI.FONT = GAMEFONT
-UI.BOLD_FONT = FONT
+UI.SMALLEST_FONT = GAMEFONT2
+UI.LITTLE_FONT = GAMEFONT
+UI.FONT = FONT
+UI.BOLD_FONT = BOLD2
 
 WHITE = (255, 255, 255)
+
+Wave.setup_const()
 # endregion
 
 def get_image(size, place):
@@ -112,8 +119,8 @@ def is_on_rect(pos, rect):
 	return b1 and b2
 
 #region game VARIABLES
-settings = {'tilesize': 14, 'settings': 0, 'dev': False, 'playing': True,
-			'fpsmax': 0, 'wave_enabled': True, 'speed': 1, 'color_theme': 0}
+settings = {'tilesize': 14, 'settings': 0, 'dev': False, 'playing': True, 'fps_limit': False,
+			'fps_max': 500, 'wave_enabled': True, 'speed': 1, 'color_theme': 0}
 colors = {'background': (10, 14, 18),
 		  'settings': (100, 100, 100),
 		  'life_ok': (30, 150, 40),
@@ -146,9 +153,9 @@ title_height = int(20.*title_width/92.)
 title_pos = (WIDTH/2 - title_width/2, 40)
 title = glow(get_image((title_width, title_height), 'images/others/title.png'))
 
-Button("new_map", (WIDTH/2 - 150, HEIGHT/2), (300, 50), tr.new_map, font_type=2)
-Button("browse_maps", (WIDTH/2 - 150, HEIGHT/2 + 100), (300, 50), tr.browse_maps, font_type=2) # ? Share maps ?
-Button("settings", (WIDTH/2 - 150, HEIGHT/2 + 200), (300, 50), tr.settings, font_type=2)
+Button('new_map', (WIDTH/2 - 150, HEIGHT/2), (300, 50), tr.new_map, font_type=1)
+Button('browse_maps', (WIDTH/2 - 150, HEIGHT/2 + 100), (300, 50), tr.browse_maps, font_type=1) # ? Share maps ?
+Button('settings', (WIDTH/2 - 150, HEIGHT/2 + 200), (300, 50), tr.settings, font_type=1)
 
 tile_size = 28
 size = int(to_right/tile_size), int(HEIGHT/tile_size)
@@ -163,9 +170,55 @@ drag_n_dropping = None
 
 zone_selection = None
 
-Tower.setup_tower_shop_images(Menu.SHOP_IMAGE_SIZE)
+def create_settings_background():
+	thickness = 5
+	colors = (15, 21, 27), (0, 0, 0)
+	radius = 24
+	surf = pygame.Surface((WIDTH, HEIGHT), pygame.SRCALPHA)
+	surf.fill((10, 14, 18))
 
-Game.menu = Menu((Menu.SHOP_POS[0], 0), (WIDTH-Menu.SHOP_POS[0], HEIGHT))
+	# Top panel
+	pygame.draw.rect(surf, colors[1], (20, 0, WIDTH - 40, 80), border_bottom_left_radius=radius, border_bottom_right_radius=radius)
+	pygame.draw.rect(surf, colors[0], (20 + thickness, 0, WIDTH - 2*thickness - 40, 80 - thickness), border_bottom_left_radius=radius, border_bottom_right_radius=radius)
+
+	rendered_text = LARGE_BOLD.render(tr.settings, WHITE)
+	height = rendered_text[0].get_height()
+	surf.blit(rendered_text[0], (20 + 40, 40 - height / 2))
+
+	# General tab
+	pygame.draw.rect(surf, colors[1], (20, 100, WIDTH / 2 - 40, HEIGHT - 100 - 20), border_radius=radius)
+	pygame.draw.rect(surf, colors[0], (20 + thickness, 100 + thickness, WIDTH / 2 - 40 - 2 * thickness, HEIGHT - 100 - 20 - 2 * thickness), border_radius=radius)
+	pygame.draw.line(surf, colors[1], (20 + thickness, 160), (WIDTH / 2 - 20 - thickness, 160), width=thickness)
+
+	rendered_text = BOLD.render(tr.general_settings, (230, 230, 230))
+	width, height = rendered_text[0].get_size()
+	surf.blit(rendered_text[0], (WIDTH / 4 - width / 2, 130 - height / 2))
+
+	# Gameplay tab
+	pygame.draw.rect(surf, colors[1], (WIDTH / 2 + 20, 100, WIDTH / 2 - 40, HEIGHT - 100 - 20), border_radius=radius)
+	pygame.draw.rect(surf, colors[0], (WIDTH / 2 + 20 + thickness, 100 + thickness, WIDTH / 2 - 40 - 2 * thickness, HEIGHT - 100 - 20 - 2 * thickness), border_radius=radius)
+	pygame.draw.line(surf, colors[1], (WIDTH / 2 + 20 + thickness, 160), (WIDTH - 20 - thickness, 160), width=thickness)
+
+	rendered_text = BOLD.render(tr.gameplay_settings, (230, 230, 230))
+	width, height = rendered_text[0].get_size()
+	surf.blit(rendered_text[0], (3 * WIDTH / 4 - width / 2, 130 - height / 2))
+
+	return surf
+
+def reset_game_menu(language):
+	global tr, settings_background
+	Tower.setup_tower_shop_images(Menu.SHOP_IMAGE_SIZE)
+	Game.menu = Menu((Menu.SHOP_POS[0], 0), (WIDTH-Menu.SHOP_POS[0], HEIGHT))
+
+	tr = Translation(language)
+	pygame.display.set_caption(tr.title)
+	Tower.setup_language(tr)
+	Game.menu.update_texts(tr)
+	UI.set_language(tr)
+
+	settings_background = create_settings_background()
+
+reset_game_menu("EN")
 #endregion
 
 #region RIGHT MENU
@@ -242,7 +295,7 @@ def show_debug_menu():
 		display_stats(["fps"], [int(clock.get_fps())])
 
 	if settings['settings'] == 2:
-		c = "Max" if FPS == 0 else FPS
+		c = "Max" if settings['fps_max'] == 0 else settings['fps_max']
 		texts = []
 		values = []
 		
@@ -290,7 +343,8 @@ def show_debug_menu():
 			texts.append("(dev.) give coins"); keys.append("c")
 			texts.append("(dev.) give extra life"); keys.append("l")
 		display_keys(texts, keys)
-	
+
+def show_extra_info():
 	if settings['dev']:
 		rendered_text = FONT.render(tr.dev_mode, WHITE)
 		rect = (20, HEIGHT-40, *rendered_text[0].get_size())
@@ -342,7 +396,7 @@ def show_selected_tower():
 	tower, cls = selected_tower
 
 	if tower.is_choosing_boost:
-		game.menu.update_description_boosts(SCREEN, cls.shop_image, cls.desc_boost1, cls.desc_boost2)
+		Game.menu.update_description_boosts(SCREEN, cls.shop_image, cls.desc_boost1, cls.desc_boost2)
 	else:
 		if Button.exists('upgrade') and game.lvl.level >= cls.ALLOWED_LEVEL[tower.lvl+1]:
 			formatted_cost = tr.money_format.format(money=cls.COST[tower.lvl+1])
@@ -355,17 +409,202 @@ def show_selected_tower():
 		is_boost_preview = (tower.lvl == cls.SPLIT_LEVEL-1 and hovered)
 		can_afford = (tower.lvl == cls.MAX_LEVEL or (cls.COST[tower.lvl + 1] <= game.coins and game.lvl.level >= cls.ALLOWED_LEVEL[tower.lvl+1]))
 		desc = tower.description_texts(hovered, selected_stats)
-		game.menu.update_upgrade_texts(SCREEN, cls.shop_image, desc, can_afford, is_boost_preview)
+		Game.menu.update_upgrade_texts(SCREEN, cls.shop_image, desc, can_afford, is_boost_preview)
+
+def create_settings_menu():
+	global settings
+	cb_x = WIDTH / 2 - 75
+	y = 160 + 20
+
+	slider_width = (WIDTH / 2 - 200) / 2
+
+	linked_lang = ['lang_fr', 'lang_en']
+	def on_fr_check():
+		reset_game_menu("FR")
+	def on_en_check():
+		reset_game_menu("EN")
+	
+	def on_dev_action(is_checked):
+		settings['dev'] = is_checked
+	
+	def on_dev_translate(self):
+		self.change_text(tr.developer_mode)
+	
+	def on_classic_check():
+		settings['color_theme'] = 0
+	def on_old_check():
+		settings['color_theme'] = 1
+	def on_classic_translate(self):
+		self.change_text(tr.classic_color_theme)
+	def on_old_translate(self):
+		self.change_text(tr.old_color_theme)
+	
+	def on_lang_translate(self):
+		self.change_text(tr.language_tab)
+	def on_theme_translate(self):
+		self.change_text(tr.theme_tab)
+	def on_others_translate(self):
+		self.change_text(tr.others_tab)
+
+	def on_fps_limit_action(is_checked):
+		Slider.set_lock('fps', not is_checked)
+		settings['fps_limit'] = is_checked
+		txt = settings['fps_max']
+		if not settings['fps_limit']:
+			txt = tr.infinite
+		Text.set_text('fps', tr.max_frame_rate.format(fps=txt))
+	def on_fps_limit_translate(self):
+		self.change_text(tr.fps_limit)
+	def on_fps_value_changed(value):
+		settings['fps_max'] = round(value)
+		txt = settings['fps_max']
+		if not settings['fps_limit']:
+			txt = tr.infinite
+		Text.set_text('fps', tr.max_frame_rate.format(fps=txt))
+	def on_fps_translate(self):
+		txt = settings['fps_max']
+		if not settings['fps_limit']:
+			txt = tr.infinite
+		self.change_text(tr.max_frame_rate.format(fps=txt))
+
+	Text('language', (WIDTH / 4, y + 15), tr.language_tab, centered=(True, True), font_type=2, on_translate=on_lang_translate)
+	y += 40
+	Text('lang_fr', (40, y + 15), tr._table["FR"]["language"], centered=(False, True)); CheckBox('lang_fr', (cb_x, y), is_checked=("FR" == tr._language), linked=linked_lang, on_check=on_fr_check)
+	y += 40
+	Text('lang_en', (40, y + 15), tr._table["EN"]["language"], centered=(False, True)); CheckBox('lang_en', (cb_x, y), is_checked=("EN" == tr._language), linked=linked_lang, on_check=on_en_check)
+	y += 40
+
+	linked_theme = ['color_theme_classic', 'color_theme_old']
+	Text('color_theme', (WIDTH / 4, y + 15), tr.theme_tab, centered=(True, True), font_type=2, on_translate=on_theme_translate)
+	y += 40
+	Text('color_theme_classic', (40, y + 15), tr.classic_color_theme, centered=(False, True), on_translate=on_classic_translate); CheckBox('color_theme_classic', (cb_x, y), is_checked=(settings['color_theme'] == 0), linked=linked_theme, on_check=on_classic_check); y += 40
+	Text('color_theme_old', (40, y + 15), tr.old_color_theme, centered=(False, True), on_translate=on_old_translate); CheckBox('color_theme_old', (cb_x, y), is_checked=(settings['color_theme'] == 1), linked=linked_theme, on_check=on_old_check); y += 40
+
+	Text('others', (WIDTH / 4, y + 15), tr.others_tab, centered=(True, True), font_type=2, on_translate=on_others_translate)
+	y += 40
+	values = (20, 500)
+	ticks = int((values[1] - values[0]) / 30)
+	txt = settings['fps_max']
+	if not settings['fps_limit']:
+		txt = tr.infinite
+	Text('fps_limit', (40, y + 15), tr.fps_limit, centered=(False, True), on_translate=on_fps_limit_translate); CheckBox('fps_limit', (cb_x, y), is_checked=settings['fps_limit'], on_action=on_fps_limit_action); y += 40
+	Text('fps', (40, y + 15), tr.max_frame_rate.format(fps=txt), centered=(False, True), on_translate=on_fps_translate); Slider('fps', (WIDTH / 2 - 45 - slider_width, y), (slider_width, 30), locked=not settings['fps_limit'], values=values, default_value=settings['fps_max'], ticks=ticks, on_value_changed=on_fps_value_changed); y += 40
+	Text('dev_mode', (40, y + 15), tr.developer_mode, centered=(False, True), on_translate=on_dev_translate); CheckBox('dev_mode', (cb_x, y), is_checked=settings['dev'], on_action=on_dev_action)
+
+
+	def on_waves_translate(self):
+		self.change_text(tr.enemy_waves)
+	def on_auto_pause_translate(self):
+		self.change_text(tr.auto_pause)
+	def on_wait_between_waves_translate(self):
+		self.change_text(tr.wave_delay)
+	def on_wait_duration_translate(self):
+		self.change_text(tr.wait_duration.format(duration=Wave.wait_duration))
+	def on_spawn_translate(self):
+		self.change_text(tr.spawning_speed.format(speed=Wave.time_between_enemies))
+	def on_spawn_factor_translate(self):
+		self.change_text(tr.spawn_factor.format(factor=Wave.spawning_factor))
+	
+	def on_wait_duration_changed(value):
+		Wave.wait_duration = value
+		Text.set_text('wait_duration', tr.wait_duration.format(duration=value))
+	
+	def on_auto_pause_action(is_checked):
+		Slider.set_lock('wait_duration', is_checked or not Wave.wait_between_waves)
+		CheckBox.set_lock('wait_between_waves', is_checked)
+		Wave.auto_pause = is_checked
+		if is_checked:
+			Text.set_text('wait_duration', tr.wait_duration.format(duration=tr.infinite))
+		else:
+			Text.set_text('wait_duration', tr.wait_duration.format(duration=Wave.wait_duration))
+	
+	def on_wait_waves_action(is_checked):
+		Slider.set_lock('wait_duration', not is_checked)
+		Wave.wait_between_waves = is_checked
+	
+	def on_spawn_changed(value):
+		value = round(value, 1)
+		Wave.time_between_enemies = value
+		Text.set_text('spawning_speed', tr.spawning_speed.format(speed=Wave.time_between_enemies))
+	
+	def on_spawn_factor_changed(value):
+		value = round(value, 1)
+		Wave.spawning_factor = value
+		Text.set_text('spawn_factor', tr.spawn_factor.format(factor=Wave.spawning_factor))
+	
+
+	cb_x = WIDTH - 75
+	y = 160 + 20
+	Text('waves', (3 * WIDTH / 4, y + 15), tr.enemy_waves, centered=(True, True), on_translate=on_waves_translate, font_type=2); y += 40
+	Text('auto_pause', (WIDTH / 2 + 40, y + 15), tr.auto_pause, centered=(False, True), on_translate=on_auto_pause_translate); CheckBox('auto_pause', (cb_x, y), is_checked=Wave.auto_pause, on_action=on_auto_pause_action); y += 40
+	Text('wait_between_waves', (WIDTH / 2 + 40, y + 15), tr.wave_delay, centered=(False, True), on_translate=on_wait_between_waves_translate); CheckBox('wait_between_waves', (cb_x, y), is_checked=Wave.wait_between_waves, locked=(Wave.auto_pause), on_action=on_wait_waves_action); y += 40
+	is_locked = Wave.auto_pause or not Wave.wait_between_waves
+	Text('wait_duration', (WIDTH / 2 + 40, y + 15), tr.wait_duration.format(duration=Wave.wait_duration), centered=(False, True), on_translate=on_wait_duration_translate); Slider('wait_duration', (WIDTH - 45 - slider_width, y), (slider_width, 30), values=(1, 30), step=0.5, locked=is_locked, default_value=Wave.wait_duration, on_value_changed=on_wait_duration_changed); y += 40
+	Text('spawning_speed', (WIDTH / 2 + 40, y + 15), tr.spawning_speed.format(speed=Wave.time_between_enemies), centered=(False, True), on_translate=on_spawn_translate); Slider('spawning_speed', (WIDTH - 45 - slider_width, y), (slider_width, 30), values=(0.5, 3), step=0.1, default_value=Wave.time_between_enemies, on_value_changed=on_spawn_changed); y += 40
+	Text('spawn_factor', (WIDTH / 2 + 40, y + 15), tr.spawn_factor.format(factor=Wave.spawning_factor), centered=(False, True), on_translate=on_spawn_factor_translate); Slider('spawn_factor', (WIDTH - 45 - slider_width, y), (slider_width, 30), values=(0.5, 3), step=0.1, default_value=Wave.spawning_factor, on_value_changed=on_spawn_factor_changed); y += 40
+	
+	def on_enemies_translate(self):
+		self.change_text(tr.enemies)
+	def on_health_factor_translate(self):
+		self.change_text(tr.health_factor.format(factor=Wave.health_factor))
+	def on_corrupted_chance_translate(self):
+		self.change_text(tr.corrupted_chance.format(chance=Wave.corrupted_chance))
+	def on_reset_translate(self):
+		self.change_text(tr.reset_settings)
+	
+	def on_health_factor_changed(value):
+		value = round(value, 2)
+		Wave.health_factor = value
+		Text.set_text('health_factor', tr.health_factor.format(factor=Wave.health_factor))
+	
+	def on_corrupted_chance_changed(value):
+		value = round(value)
+		Wave.corrupted_chance = value
+		Text.set_text('corrupted_chance', tr.corrupted_chance.format(chance=Wave.corrupted_chance))
+	
+	def on_reset_gameplay_settings():
+		Wave.setup_const()
+		Slider.set_value('wait_duration', Wave.wait_duration)
+		Slider.set_value('spawning_speed', Wave.time_between_enemies)
+		Slider.set_value('spawn_factor', Wave.spawning_factor)
+		Slider.set_value('health_factor', Wave.health_factor)
+		Slider.set_value('corrupted_chance', Wave.corrupted_chance)
+
+	Text('enemies', (3 * WIDTH / 4, y + 15), tr.enemies, centered=(True, True), on_translate=on_enemies_translate, font_type=2); y += 40
+	Text('health_factor', (WIDTH / 2 + 40, y + 15), tr.health_factor.format(factor=Wave.health_factor), centered=(False, True), on_translate=on_health_factor_translate); Slider('health_factor', (WIDTH - 45 - slider_width, y), (slider_width, 30), values=(0.05, 2), step=0.05, default_value=Wave.health_factor, on_value_changed=on_health_factor_changed); y += 40
+	Text('corrupted_chance', (WIDTH / 2 + 40, y + 15), tr.corrupted_chance.format(chance=Wave.corrupted_chance), centered=(False, True), on_translate=on_corrupted_chance_translate); Slider('corrupted_chance', (WIDTH - 45 - slider_width, y), (slider_width, 30), values=(0, 100), ticks=10, default_value=Wave.corrupted_chance, on_value_changed=on_corrupted_chance_changed)
+
+	Button('reset', (WIDTH / 2 + 45, HEIGHT - 85), (WIDTH / 2 - 90, 40), tr.reset_settings, on_click=on_reset_gameplay_settings, on_translate=on_reset_translate)
+
+	def on_back_checked():
+		nav_settings_to_menu()
+
+	ImageButton('leave_settings', "images/others/delete.png", (WIDTH - 95, 15), on_click=on_back_checked)
+
+	
 
 def nav_game_to_menu():
 	global current_menu
 	current_menu = "menu"
 	settings['playing'] = True
-	ImageButton.delete_all()
-	Button.delete_all()
-	Button("new_map", (WIDTH/2 - 150, HEIGHT/2), (300, 50), tr.new_map, font_type=2)
-	Button("browse_maps", (WIDTH/2 - 150, HEIGHT/2 + 100), (300, 50), tr.browse_maps, font_type=2)
-	Button("settings", (WIDTH/2 - 150, HEIGHT/2 + 200), (300, 50), tr.settings, font_type=2)
+	UI.delete_all()
+	Button("new_map", (WIDTH/2 - 150, HEIGHT/2), (300, 50), tr.new_map, font_type=1)
+	Button("browse_maps", (WIDTH/2 - 150, HEIGHT/2 + 100), (300, 50), tr.browse_maps, font_type=1)
+	Button("settings", (WIDTH/2 - 150, HEIGHT/2 + 200), (300, 50), tr.settings, font_type=1)
+
+def nav_menu_to_settings():
+	global current_menu
+	current_menu = "settings"
+	UI.delete_all()
+	create_settings_menu()
+
+def nav_settings_to_menu():
+	global current_menu
+	current_menu = "menu"
+	UI.delete_all()
+	Button("new_map", (WIDTH/2 - 150, HEIGHT/2), (300, 50), tr.new_map, font_type=1)
+	Button("browse_maps", (WIDTH/2 - 150, HEIGHT/2 + 100), (300, 50), tr.browse_maps, font_type=1)
+	Button("settings", (WIDTH/2 - 150, HEIGHT/2 + 200), (300, 50), tr.settings, font_type=1)
 
 def nav_menu_to_game():
 	global current_menu
@@ -576,10 +815,13 @@ def on_boost2_confirm():
 	tower.chosen_boost = 2
 	on_boost_selected()
 
+
 info_bubble = None
 info_rect = None
 
 last_rects, new_rects = [], []
+
+settings_background = create_settings_background()
 
 printf('Initialization time : ' + str(time.time()-START))
 
@@ -607,13 +849,14 @@ while execute:
 		
 		if Button.clicked('new_map'):
 			SCREEN.fill(colors['background'])
+			show_extra_info()
 			pygame.display.update()
 			new_game(n, m, rdi(1,3))
 			nav_menu_to_game()
 		elif Button.clicked('browse_maps'):
 			pass
 		elif Button.clicked('settings'):
-			pass
+			nav_menu_to_settings()
 		
 		for event in listev:
 			if event.type == QUIT:
@@ -624,12 +867,23 @@ while execute:
 					execute = False
 					
 		UI.update(SCREEN, x, y, current_click_state)
+	elif current_menu == "settings":
 		
+		for event in listev:
+			if event.type == QUIT:
+				execute = False
+			
+			if event.type == KEYDOWN:
+				if event.key == K_ESCAPE:
+					nav_settings_to_menu()
+		
+		SCREEN.blit(settings_background, (0, 0))
+		UI.update(SCREEN, x, y, current_click_state)
 	elif current_menu == "game":
 		xc, yc = int((x-game._xoffset)/tile_size), int((y-game._yoffset)/tile_size)		
 
-		if settings['wave_enabled'] and settings['playing']:
-			game.update_enemy_spawn()
+		if settings['wave_enabled']:
+			game.update_enemy_spawn(settings['playing'])
 		
 		if not (drag_n_dropping or info_bubble):
 			game.update_selection(xc, yc, pressed=pressed_mouse_keys[0])
@@ -662,16 +916,16 @@ while execute:
 								game.potential_path = []
 								game.update_left()
 							else:
-								drag_n_dropping = game.menu.shop_select_tower(x, y)
+								drag_n_dropping = Game.menu.shop_select_tower(x, y)
 								if drag_n_dropping:
 									remove_info_bubble()
 									printf("Start dragging tower")
 				elif event.button == 4:
 					if x > Menu.SHOP_POS[0]:
-						game.menu.shop_navigate(-1)
+						Game.menu.shop_navigate(-1)
 				elif event.button == 5:
 					if x > Menu.SHOP_POS[0]:
-						game.menu.shop_navigate(+1)
+						Game.menu.shop_navigate(+1)
 			if event.type == MOUSEBUTTONUP:
 				if event.button == 1:
 					if game.selected_tiles != [] and not info_bubble:
@@ -779,10 +1033,10 @@ while execute:
 					game.get_damage(-1)
 
 				if event.key == K_f:
-					printf(f"FPS cap toggled from {FPS if FPS != 0 else 'MAX'} to {FPS+30 if FPS+30<=300 else 'MAX'}")
-					FPS += 30
-					if FPS > 300:
-						FPS = 0
+					printf(f"FPS cap toggled from {settings['fps_max'] if settings['fps_max'] != 0 else 'MAX'} to {settings['fps_max']+30 if settings['fps_max']+30<=300 else 'MAX'}")
+					settings['fps_max'] += 30
+					if settings['fps_max'] > 300:
+						settings['fps_max'] = 0
 
 				if event.key == K_m and settings['dev']:
 					np.savetxt('debug_data/starting_map.csv', game.array.transpose(), fmt="%d")
@@ -798,16 +1052,15 @@ while execute:
 
 		# ? Change GAME_SCREEN image to correspond with new array (instead of updating everything every frame)
 		show_range = (drag_n_dropping == None and game.selected_tiles == [])
-		selected = (selected_tower[0].pos[0] if selected_tower else None)
-		game.update_screen(SCREEN, GAME_SCREEN, (xc, yc), show_range, selected, settings['playing'])
+		game.update_screen(SCREEN, GAME_SCREEN, (xc, yc), show_range, selected_tower, settings['playing'])
 
 		Enemy.update(SCREEN, game.wave, settings['playing'])
-		game.menu.update(SCREEN)
+		Game.menu.update(SCREEN)
 
 		if selected_tower:
 			show_selected_tower()
 		else:
-			game.menu.update_shop(SCREEN)
+			Game.menu.update_shop(SCREEN)
 		
 		if game.selected_tiles and info_bubble and current_menu == 'game':
 			cost = 0
@@ -869,12 +1122,14 @@ while execute:
 
 		prev_xc, prev_yc = xc, yc
 
+		show_extra_info()
+
 		game.update_level()
 
 		if game.need_tile_update:
 			pygame.display.update()
 		else:
-			new_rects.append((*game.menu.pos, *game.menu.size))
+			new_rects.append((*Game.menu.pos, *Game.menu.size))
 			list = last_rects + new_rects
 			list += Button.last_rects + Button.new_rects
 			list += ImageButton.last_rects + ImageButton.new_rects
@@ -887,8 +1142,12 @@ while execute:
 
 	last_click_state = current_click_state
 	if current_menu != 'game':
+		show_extra_info()
 		pygame.display.update()
-	clock.tick(FPS)
+	if settings['fps_limit']:
+		clock.tick(settings['fps_max'])
+	else:
+		clock.tick(0)
 
 pygame.quit()
 sys.exit()

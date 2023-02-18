@@ -194,9 +194,9 @@ class Enemy:
 		pygame.draw.circle(tmp2, (150, 0, 50, 50), (tmp, tmp), tmp, width=5)
 		HealZone.range_im[1] = tmp2
 	
-	def update_health(lvl, difficulty):
+	def update_health(lvl, health_factor):
 		for cls in Enemy.subclasses:
-			new_health = int(cls.DEFAULT_HEALTH[0] + (lvl - 1) * difficulty * cls.DEFAULT_HEALTH[0] / 3)
+			new_health = int(cls.DEFAULT_HEALTH[0] + (lvl - 1) * health_factor * cls.DEFAULT_HEALTH[0])
 			cls.MAX_HEALTH = [new_health, 2 * new_health]
 	
 	def print_health_update():
