@@ -415,6 +415,8 @@ class Slider(UI):
 
 	thickness = 3
 
+	tick_width = 1
+
 	COLOR_TICK = (200, 200, 200)
 	COLOR_LOCKED_TICK = (20, 28, 36)
 	COLOR_BUTTON_SIDE = (10, 14, 18)
@@ -519,7 +521,7 @@ class Slider(UI):
 				value = self.a + tick * self.step
 				normed_value = (value - self.a) / int((self.b - self.a))
 				pos = Slider.thickness + self.radius + normed_value * self.center_width
-				pygame.draw.line(surface, self.get_tick_color(value), (self.pos[0] + pos, self.pos[1] + Slider.thickness), (self.pos[0] + pos, self.pos[1] + self.size[1] - Slider.thickness-1), width=2)
+				pygame.draw.line(surface, self.get_tick_color(value), (self.pos[0] + pos, self.pos[1] + Slider.thickness), (self.pos[0] + pos, self.pos[1] + self.size[1] - Slider.thickness-1), width=Slider.tick_width)
 		
 		pygame.draw.circle(surface, Slider.COLOR_BUTTON_SIDE, (x, self.pos[1] + self.size[1] / 2), self.radius)
 		pygame.draw.circle(surface, self.get_first_color(), (x, self.pos[1] + self.size[1] / 2), self.radius - 2)
