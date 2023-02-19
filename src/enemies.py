@@ -558,7 +558,7 @@ class Healer(Enemy):
 
 	COIN_VALUE = 100
 	CAN_HEAL = [Knight, Goblin, Dragon, KingOfKnights, Giant]
-	MAX_RANGE = 10
+	MAX_RANGE = [7, 10]
 	HEALING_SPEED = [0.5, 0.25]
 	HEALING_AMOUNT = [120, 200]
 	DEFAULT_SPEED = [1.6, 3.2]
@@ -573,14 +573,14 @@ class Healer(Enemy):
 
 	def custom_update(self):		
 		if self.focus:
-			if self.focus.dead or _dist_2(self.x,self.y,self.focus.x,self.focus.y) > (Healer.MAX_RANGE*Enemy.tile_size)**2:
-				self.focus = Enemy.get_closer(self.CAN_HEAL,(self.x,self.y),Healer.MAX_RANGE*Enemy.tile_size)
+			if self.focus.dead or _dist_2(self.x,self.y,self.focus.x,self.focus.y) > (Healer.MAX_RANGE[self.corrupted]*Enemy.tile_size)**2:
+				self.focus = Enemy.get_closer(self.CAN_HEAL,(self.x,self.y),Healer.MAX_RANGE[self.corrupted]*Enemy.tile_size)
 			if self.focus and _dist_2(self.x,self.y,self.focus.x,self.focus.y) < (4*Enemy.tile_size)**2:
 				if not self.focus.dead and self.is_loaded:
 					self.focus.get_damage(-Healer.HEALING_AMOUNT[self.corrupted])
 					self.is_loaded.reset()
 		else:
-			self.focus = Enemy.get_closer(Healer.CAN_HEAL,(self.x,self.y),Healer.MAX_RANGE*Enemy.tile_size)
+			self.focus = Enemy.get_closer(Healer.CAN_HEAL,(self.x,self.y),Healer.MAX_RANGE[self.corrupted]*Enemy.tile_size)
 		
 		if self.focus and _dist_2(self.x,self.y,self.focus.x,self.focus.y) > (2*Enemy.tile_size)**2:
 			self.vx, self.vy = _vect((self.x, self.y), (self.focus.x, self.focus.y))
