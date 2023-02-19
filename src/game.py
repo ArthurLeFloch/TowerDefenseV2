@@ -148,9 +148,9 @@ colors = {'background': (10, 14, 18),
 					'Pborder': (100, 70, 80)}]}
 
 
-title_width = int(2*WIDTH/(92*5)) * 92
+title_width = (WIDTH - 80) / 2
 title_height = int(20.*title_width/92.)
-title_pos = (WIDTH/2 - title_width/2, 40)
+title_pos = (WIDTH / 2 - title_width / 2, 40)
 title = glow(get_image((title_width, title_height), 'images/others/title.png'))
 
 Button('new_map', (WIDTH/2 - 150, HEIGHT/2), (300, 50), tr.new_map, font_type=1)
