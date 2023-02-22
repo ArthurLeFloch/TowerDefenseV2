@@ -8,6 +8,7 @@ from enemies import Enemy, Knight, Goblin, Dragon, KingOfKnights, Giant, Healer,
 from enemy_effects import EnemyEffect, Fire, Poison, Slowness
 from logs import Logs
 from timer import Timer
+import json
 
 def printf(args):
 	Logs.print('towers', args)
@@ -174,6 +175,60 @@ class Tower:
 		return f'Tower located at x = {self.x}, y = {self.y}\n{self.pos}'
 	
 	#region SETUP
+	def setup_config():
+		with open('config/towers.json', 'r') as cfg:
+			data = json.load(cfg)
+			for cls in Tower.subclasses:
+				cls.load_config(data[cls.__name__])
+	
+	@classmethod
+	def load_config(cls, data):
+		printf(f"Loading {cls.__name__}")
+		cls.SIZE = data['size']
+		cls.ALLOWED_LEVEL = data['allowed_level']
+		cls.COST = data['cost']
+		if 'range' in data:
+			cls.CLASSIC_RANGE = data['range']
+		if 'reload_speed' in data:
+			cls.CLASSIC_RELOAD_SPEED = data['reload_speed']
+		if 'damage' in data:
+			cls.CLASSIC_DAMAGE = data['damage']
+		if 'can_attack' in data:
+			cls.CAN_ATTACK = Tower.classes_from_name_list(data['can_attack'])
+		if 'explosion_radius' in data:
+			cls.CLASSIC_EXPLOSION_RADIUS = data['explosion_radius']
+		if 'effect_level' in data:
+			cls.EFFECT_LEVEL = data['effect_level']
+		if 'effect_duration' in data:
+			cls.CLASSIC_DURATION = data['effect_duration']
+		if 'earns' in data:
+			cls.EARNS = data['earns']
+		if 'can_effect' in data:
+			cls.CAN_EFFECT = Tower.tower_classes_from_name_list(data['can_effect'])
+		if 'damage_multiplier' in data:
+			cls.DAMAGE_MULTIPLIER = data['damage_multiplier']
+		if 'range_multiplier' in data:
+			cls.RANGE_MULTIPLIER = data['range_multiplier']
+		if 'speed_multiplier' in data:
+			cls.SPEED_MULTIPLIER = data['speed_multiplier']
+
+		if hasattr(cls, 'load_custom_config'):
+			cls.load_custom_config(data)
+
+	def classes_from_name_list(names):
+		result = []
+		for cls in Enemy.subclasses:
+			if cls.__name__ in names:
+				result.append(cls)
+		return result
+	
+	def tower_classes_from_name_list(names):
+		result = []
+		for cls in Tower.subclasses:
+			if cls.__name__ in names:
+				result.append(cls)
+		return result
+	
 	def setup_subclasses():
 		Tower.subclasses = Classic.__subclasses__() + Booster.__subclasses__()
 	
@@ -190,9 +245,9 @@ class Tower:
 
 		Mortar.name = tr.tower_mortar
 		Wizard.name = tr.tower_wizard
-		FireDiffuser.name = tr.tower_fire_diffuser
+		FlameThrower.name = tr.tower_flame_thrower
 		PoisonDiffuser.name = tr.tower_poison_diffuser
-		SlownessDiffuser.name = tr.tower_slowness_diffuser
+		Freezer.name = tr.tower_freezer
 		Bank.name = tr.tower_bank
 		DamageBooster.name = tr.tower_damage_booster
 		RangeBooster.name = tr.tower_range_booster
@@ -215,9 +270,9 @@ class Tower:
 		Hut.shop_image = get_image(size, 'images/towers/hut.png')
 		Mortar.shop_image = get_image(size, 'images/towers/mortar.png')
 		Wizard.shop_image = get_image(size, 'images/towers/wizard.png')
-		FireDiffuser.shop_image = get_image(size, 'images/towers/fire_diffuser.png')
+		FlameThrower.shop_image = get_image(size, 'images/towers/flame_thrower.png')
 		PoisonDiffuser.shop_image = get_image(size, 'images/towers/poison_diffuser.png')
-		SlownessDiffuser.shop_image = get_image(size, 'images/towers/slowness_diffuser.png')
+		Freezer.shop_image = get_image(size, 'images/towers/freezer.png')
 		Bank.shop_image = get_image(size, 'images/towers/bank.png')
 		DamageBooster.shop_image = get_image(size, 'images/towers/damage_booster.png')
 		RangeBooster.shop_image = get_image(size, 'images/towers/range_booster.png')
@@ -227,9 +282,9 @@ class Tower:
 		Hut.image = get_image((tile_size*Hut.SIZE, tile_size*Hut.SIZE), 'images/towers/hut.png')
 		Mortar.image = get_image((tile_size*Mortar.SIZE, tile_size*Mortar.SIZE), 'images/towers/mortar.png')
 		Wizard.image = get_image((tile_size*Wizard.SIZE, tile_size*Wizard.SIZE), 'images/towers/wizard.png')
-		FireDiffuser.image = get_image((tile_size*FireDiffuser.SIZE, tile_size*FireDiffuser.SIZE), 'images/towers/fire_diffuser.png')
+		FlameThrower.image = get_image((tile_size*FlameThrower.SIZE, tile_size*FlameThrower.SIZE), 'images/towers/flame_thrower.png')
 		PoisonDiffuser.image = get_image((tile_size*PoisonDiffuser.SIZE, tile_size*PoisonDiffuser.SIZE), 'images/towers/poison_diffuser.png')
-		SlownessDiffuser.image = get_image((tile_size*SlownessDiffuser.SIZE, tile_size*SlownessDiffuser.SIZE), 'images/towers/slowness_diffuser.png')
+		Freezer.image = get_image((tile_size*Freezer.SIZE, tile_size*Freezer.SIZE), 'images/towers/freezer.png')
 		Bank.image = get_image((tile_size*Bank.SIZE, tile_size*Bank.SIZE), 'images/towers/bank.png')
 		DamageBooster.image = get_image((tile_size*DamageBooster.SIZE, tile_size*DamageBooster.SIZE), 'images/towers/damage_booster.png')
 		RangeBooster.image = get_image((tile_size*RangeBooster.SIZE, tile_size*RangeBooster.SIZE), 'images/towers/range_booster.png')
@@ -539,20 +594,20 @@ class Hut(Classic):
 	effect = Poison
 	EFFECT_LEVEL = [0,0,0,0,0,0,1,2,2,3,4]
 	CLASSIC_DURATION = [4000,4000,4000,4000,4000,4000,5000,7000,10000,14000,20000]
+	GOLD_TOUCH_AMOUNT = [1,1,1,1,1,1,1,2,4,6,10]
 	desc_boost2 = None
 	
-	SIZE = 2
-	ALLOWED_LEVEL = [1, 2, 4, 8, 15, 23, 38, 54, 72, 92, 116]
-	COST = [100,250,420,630,890,1450,2700,5200,11000,24000,45000]
-	CAN_ATTACK = [Knight, Goblin, Dragon, KingOfKnights, Giant, Healer, HealZone]
-	CLASSIC_RELOAD_SPEED = [0.5, 0.475, 0.45, 0.45, 0.425, 0.4, 0.4, 0.35, 0.3, 0.25, 0.2]
-	CLASSIC_DAMAGE = [100,120,150,200,275,380,500,635,770,940,1100]
-	CLASSIC_RANGE = [5,5,5,5.5,5.5,6,6,6.5,6.5,7,7]
+	SIZE = None
+	ALLOWED_LEVEL = None
+	COST = None
+	CAN_ATTACK = None
+	CLASSIC_RELOAD_SPEED = None
+	CLASSIC_DAMAGE = None
+	CLASSIC_RANGE = None
 
 	MAX_LEVEL = 10
 	SPLIT_LEVEL = 5
-	GOLD_TOUCH_AMOUNT = [1,1,1,1,1,1,1,2,4,6,10]
-
+	
 	def __init__(self, x, y, level = 0):
 		Tower.__init__(self, (x, y), lvl=level)
 
@@ -600,14 +655,14 @@ class Mortar(Classic):
 	shop_image = None
 	gradient_rect = [None, None, None]
 	
-	SIZE = 3
-	ALLOWED_LEVEL = [1, 2, 4, 8, 15, 23, 38, 54, 72, 92, 116]
-	COST = [200,350,610,890,1440,2100,3500,5200,13000,28000,65000]
-	CAN_ATTACK = [Knight, Goblin, KingOfKnights, Giant, HealZone]
-	CLASSIC_RELOAD_SPEED = [0.9, 0.85, 0.8, 0.75, 0.75, 0.675, 0.6, 0.55, 0.5, 0.45, 0.45]
-	CLASSIC_DAMAGE = [200,240,270,300,340,380,440,510,640,700,900]
-	CLASSIC_RANGE = [4,4,4.5,4.5,4.5,5,5,5.5,5.5,6,6]
-	CLASSIC_EXPLOSION_RADIUS = [1.5,1.5,2,2,2.5,2.5,3,3,3.5,3.5,4]
+	SIZE = None
+	ALLOWED_LEVEL = None
+	COST = None
+	CAN_ATTACK = None
+	CLASSIC_RELOAD_SPEED = None
+	CLASSIC_DAMAGE = None
+	CLASSIC_RANGE = None
+	CLASSIC_EXPLOSION_RADIUS = None
 
 	MAX_LEVEL = 10
 	SPLIT_LEVEL = -1
@@ -649,13 +704,13 @@ class Wizard(Classic):
 	shop_image = None
 	gradient_rect = [None, None, None]
 	
-	SIZE = 2
-	ALLOWED_LEVEL = [1, 2, 4, 8, 15, 23, 38, 54, 72, 92, 116]
-	COST = [360,520,840,1440,2100,2900,4100,7500,12000,26000,55000]
-	CAN_ATTACK = [Knight, Goblin, Dragon, KingOfKnights, Giant, Healer, HealZone]
-	CLASSIC_RELOAD_SPEED = [0.9, 0.85, 0.8, 0.75, 0.7, 0.6, 0.6, 0.525, 0.475, 0.475, 0.45]
-	CLASSIC_DAMAGE = [200,220,250,280,310,350,410,490,570,680,800]
-	CLASSIC_RANGE = [3,3,3.5,3.5,4,4,4.5,4.5,5,5,5]
+	SIZE = None
+	ALLOWED_LEVEL = None
+	COST = None
+	CAN_ATTACK = None
+	CLASSIC_RELOAD_SPEED = None
+	CLASSIC_DAMAGE = None
+	CLASSIC_RANGE = None
 
 	MAX_LEVEL = 10
 	SPLIT_LEVEL = -1
@@ -687,7 +742,7 @@ class Wizard(Classic):
 			return [level, radius, damage, damage_per_sec]
 
 
-class FireDiffuser(Classic):
+class FlameThrower(Classic):
 	name = None
 	effect = Fire
 	amount = 0
@@ -696,14 +751,14 @@ class FireDiffuser(Classic):
 	shop_image = None
 	gradient_rect = [None, None, None]
 	
-	SIZE = 2
-	ALLOWED_LEVEL = [1, 2, 4, 8, 15, 23, 38, 54, 72, 92, 116]
-	COST = [200,350,610,890,1440,2100,3500,5200,13000,28000,65000]
-	CAN_ATTACK = [Knight, Goblin, Dragon, KingOfKnights, Giant, Healer, HealZone]
-	CLASSIC_RELOAD_SPEED = [0.25, 0.25, 0.25, 0.25, 0.25, 0.25, 0.25, 0.25, 0.25, 0.25, 0.25]
-	EFFECT_LEVEL = [0,0,0,1,1,1,2,2,3,3,4]
-	CLASSIC_RANGE = [1,1,1.5,1.5,2,2,2,2.5,2.5,2.5,3]
-	CLASSIC_DURATION = [3.0, 3.75, 4.5, 5.25, 6.0, 7.5, 9.0, 11.25, 15.0, 26.25, 60.0]
+	SIZE = None
+	ALLOWED_LEVEL = None
+	COST = None
+	CAN_ATTACK = None
+	CLASSIC_RELOAD_SPEED = None
+	EFFECT_LEVEL = None
+	CLASSIC_RANGE = None
+	CLASSIC_DURATION = None
 
 	MAX_LEVEL = 10
 	SPLIT_LEVEL = -1
@@ -711,15 +766,15 @@ class FireDiffuser(Classic):
 	def __init__(self, x, y, level = 0):
 		Tower.__init__(self, (x, y), lvl=level)
 
-	def on_update(fire_diffuser):
-		if fire_diffuser.is_loaded:
-			damaged = Enemy.get_all(FireDiffuser.CAN_ATTACK, fire_diffuser.center, fire_diffuser.range)
+	def on_update(flame_thrower):
+		if flame_thrower.is_loaded:
+			damaged = Enemy.get_all(FlameThrower.CAN_ATTACK, flame_thrower.center, flame_thrower.range)
 			for enemy in damaged:
-				effect = Fire(enemy, FireDiffuser.EFFECT_LEVEL[fire_diffuser.lvl], FireDiffuser.CLASSIC_DURATION[fire_diffuser.lvl])
+				effect = Fire(enemy, FlameThrower.EFFECT_LEVEL[flame_thrower.lvl], FlameThrower.CLASSIC_DURATION[flame_thrower.lvl])
 				enemy.apply_effect(Fire, effect)
 			if damaged != []:
-				fire_diffuser.shot += 1
-				fire_diffuser.is_loaded.reset()
+				flame_thrower.shot += 1
+				flame_thrower.is_loaded.reset()
 	
 	@classmethod
 	def shop_item(cls, shop_width, item_height):
@@ -747,14 +802,14 @@ class PoisonDiffuser(Classic):
 	shop_image = None
 	gradient_rect = [None, None, None]
 	
-	SIZE = 2
-	ALLOWED_LEVEL = [1, 2, 4, 8, 15, 23, 38, 54, 72, 92, 116]
-	COST = [200,350,610,890,1440,2100,3500,5200,13000,28000,65000]
-	CAN_ATTACK = [Knight, Goblin, Dragon, KingOfKnights, Giant, Healer, HealZone]
-	CLASSIC_RELOAD_SPEED = [0.25, 0.25, 0.25, 0.25, 0.25, 0.25, 0.25, 0.25, 0.25, 0.25, 0.25]
-	EFFECT_LEVEL = [0,0,0,1,1,1,2,2,3,3,4]
-	CLASSIC_RANGE = [1,1,1.5,1.5,2,2,2,2.5,2.5,2.5,3]
-	CLASSIC_DURATION = [1.0, 1.25, 1.5, 1.75, 2.0, 2.5, 3.0, 3.75, 5.0, 8.75, 20.0]
+	SIZE = None
+	ALLOWED_LEVEL = None
+	COST = None
+	CAN_ATTACK = None
+	CLASSIC_RELOAD_SPEED = None
+	EFFECT_LEVEL = None
+	CLASSIC_RANGE = None
+	CLASSIC_DURATION = None
 
 	MAX_LEVEL = 10
 	SPLIT_LEVEL = -1
@@ -790,7 +845,7 @@ class PoisonDiffuser(Classic):
 			return [level, radius, effect_level, duration, dpt]
 
 
-class SlownessDiffuser(Classic):
+class Freezer(Classic):
 	name = None
 	effect = Slowness
 	amount = 0
@@ -799,14 +854,14 @@ class SlownessDiffuser(Classic):
 	shop_image = None
 	gradient_rect = [None, None, None]
 	
-	SIZE = 2
-	ALLOWED_LEVEL = [1, 2, 4, 8, 15, 23, 38, 54, 72, 92, 116]
-	COST = [200,350,610,890,1440,2100,3500,5200,13000,28000,65000]
-	CAN_ATTACK = [Knight, Goblin, Dragon, KingOfKnights, Giant, Healer, HealZone]
-	CLASSIC_RELOAD_SPEED = [0.25, 0.25, 0.25, 0.25, 0.25, 0.25, 0.25, 0.25, 0.25, 0.25, 0.25]
-	EFFECT_LEVEL = [0,0,0,1,1,1,2,2,3,3,4]
-	CLASSIC_RANGE = [1,1,1.5,1.5,2,2,2,2.5,2.5,2.5,3]
-	CLASSIC_DURATION = [1.0, 1.25, 1.5, 1.75, 2.0, 2.5, 3.0, 3.75, 5.0, 8.75, 20.0]
+	SIZE = None
+	ALLOWED_LEVEL = None
+	COST = None
+	CAN_ATTACK = None
+	CLASSIC_RELOAD_SPEED = None
+	EFFECT_LEVEL = None
+	CLASSIC_RANGE = None
+	CLASSIC_DURATION = None
 
 	MAX_LEVEL = 10
 	SPLIT_LEVEL = -1
@@ -814,16 +869,16 @@ class SlownessDiffuser(Classic):
 	def __init__(self, x, y, level = 0):
 		Tower.__init__(self, (x, y), lvl=level)
 
-	def on_update(slowness_diffuser):
-		if slowness_diffuser.is_loaded:
-			damaged = Enemy.get_all(SlownessDiffuser.CAN_ATTACK, slowness_diffuser.center, slowness_diffuser.range)
+	def on_update(freezer):
+		if freezer.is_loaded:
+			damaged = Enemy.get_all(Freezer.CAN_ATTACK, freezer.center, freezer.range)
 			for enemy in damaged:
 				if hasattr(enemy, "v"):
-					effect = Slowness(enemy, SlownessDiffuser.EFFECT_LEVEL[slowness_diffuser.lvl], SlownessDiffuser.CLASSIC_DURATION[slowness_diffuser.lvl])
+					effect = Slowness(enemy, Freezer.EFFECT_LEVEL[freezer.lvl], Freezer.CLASSIC_DURATION[freezer.lvl])
 					enemy.apply_effect(Slowness, effect)
 			if damaged != []:
-				slowness_diffuser.shot += 1
-				slowness_diffuser.is_loaded.reset()
+				freezer.shot += 1
+				freezer.is_loaded.reset()
 	
 	@classmethod
 	def shop_item(cls, shop_width, item_height):
@@ -851,11 +906,11 @@ class Bank(Classic):
 	shop_image = None
 	gradient_rect = [None, None, None]
 
-	SIZE = 2
-	ALLOWED_LEVEL = [1, 2, 4, 8, 15, 23, 38, 54, 72, 92, 116]
-	COST = [800,1250,1840,2600,3500,5400,10500,21000,45000,110000,250000]
-	CLASSIC_RELOAD_SPEED = [9.0, 8.5, 8.0, 7.5, 7.5, 6.75, 6.0, 5.5, 5.0, 4.5, 4.5]
-	EARNS = [20, 25, 33, 48, 64, 120, 240, 520, 1200, 2800, 6400]
+	SIZE = None
+	ALLOWED_LEVEL = None
+	COST = None
+	CLASSIC_RELOAD_SPEED = None
+	EARNS = None
 
 	MAX_LEVEL = 10
 	SPLIT_LEVEL = -1
@@ -892,12 +947,12 @@ class DamageBooster(Booster):
 	shop_image = None
 	gradient_rect = [None, None, None]
 	
-	SIZE = 2
-	ALLOWED_LEVEL = [2, 2, 4, 8, 15, 23, 38, 54, 72, 92, 116]
-	COST = [5000,6000,7500,10000,13000,20000,40000,100000,175000,225000,300000]
-	CAN_EFFECT = [Hut, Mortar, Wizard] # * No diffuser
-	DAMAGE_MULTIPLIER = [1.15,1.2,1.25,1.3,1.35,1.4,1.45,1.5,1.55,1.6,1.65]
-	CLASSIC_RANGE = [4,4,4.5,4.5,5,5,5.5,5.5,6,6,7]
+	SIZE = None
+	ALLOWED_LEVEL = None
+	COST = None
+	CAN_EFFECT = None
+	DAMAGE_MULTIPLIER = None
+	CLASSIC_RANGE = None
 
 	MAX_LEVEL = 10
 	SPLIT_LEVEL = -1
@@ -928,12 +983,12 @@ class RangeBooster(Booster):
 	shop_image = None
 	gradient_rect = [None, None, None]
 	
-	SIZE = 2
-	ALLOWED_LEVEL = [2, 2, 4, 8, 15, 23, 38, 54, 72, 92, 116]
-	COST = [5000,6000,7500,10000,13000,20000,40000,100000,175000,225000,300000]
-	CAN_EFFECT = [Hut, Mortar, Wizard, FireDiffuser, PoisonDiffuser, SlownessDiffuser] # * No diffuser
-	RANGE_MULTIPLIER = [1.15,1.2,1.25,1.3,1.35,1.4,1.45,1.5,1.55,1.6,1.65]
-	CLASSIC_RANGE = [4,4,4.5,4.5,5,5,5.5,5.5,6,6,7]
+	SIZE = None
+	ALLOWED_LEVEL = None
+	COST = None
+	CAN_EFFECT = None
+	RANGE_MULTIPLIER = None
+	CLASSIC_RANGE = None
 
 	MAX_LEVEL = 10
 	SPLIT_LEVEL = -1
@@ -964,12 +1019,12 @@ class SpeedBooster(Booster):
 	shop_image = None
 	gradient_rect = [None, None, None]
 	
-	SIZE = 2
-	ALLOWED_LEVEL = [2, 2, 4, 8, 15, 23, 38, 54, 72, 92, 116]
-	COST = [5000,6000,7500,10000,13000,20000,40000,100000,175000,225000,300000]
-	CAN_EFFECT = [Hut, Mortar, Wizard, Bank] # * No diffuser
-	SPEED_MULTIPLIER = [1.15,1.2,1.25,1.3,1.35,1.4,1.45,1.5,1.55,1.6,1.65]
-	CLASSIC_RANGE = [4,4,4.5,4.5,5,5,5.5,5.5,6,6,7]
+	SIZE = None
+	ALLOWED_LEVEL = None
+	COST = None
+	CAN_EFFECT = None
+	SPEED_MULTIPLIER = None
+	CLASSIC_RANGE = None
 
 	MAX_LEVEL = 10
 	SPLIT_LEVEL = -1

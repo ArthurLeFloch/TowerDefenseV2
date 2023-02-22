@@ -30,6 +30,9 @@ Tower.setup_boosters()
 Enemy.setup_subclasses()
 UI.setup_subclasses()
 
+Enemy.setup_config()
+Tower.setup_config()
+
 tr = Translation('EN')
 Tower.setup_language(tr)
 Menu.setup_language(tr)
@@ -551,6 +554,10 @@ def create_settings_menu():
 		self.change_text(tr.corrupted_chance.format(chance=Wave.corrupted_chance))
 	def on_reset_translate(self):
 		self.change_text(tr.reset_settings)
+	def on_enemy_config_translate(self):
+		self.change_text(tr.reset)
+	def on_enemy_config_text_translate(self):
+		self.change_text(tr.reset_enemy_config)
 	
 	def on_health_factor_changed(value):
 		value = round(value, 2)
@@ -569,10 +576,31 @@ def create_settings_menu():
 		Slider.set_value('spawn_factor', Wave.spawning_factor)
 		Slider.set_value('health_factor', Wave.health_factor)
 		Slider.set_value('corrupted_chance', Wave.corrupted_chance)
+	
+	def on_enemy_config_click():
+		printf("Reset enemy configuration...")
+		Enemy.setup_config()
+		printf("Enemy configuration reset successfull")
 
 	Text('enemies', (3 * WIDTH / 4, y + 15), tr.enemies, centered=(True, True), on_translate=on_enemies_translate, font_type=2); y += 40
 	Text('health_factor', (WIDTH / 2 + 40, y + 15), tr.health_factor.format(factor=Wave.health_factor), centered=(False, True), on_translate=on_health_factor_translate); Slider('health_factor', (WIDTH - 45 - slider_width, y), (slider_width, 30), values=(0.05, 2), step=0.05, default_value=Wave.health_factor, on_value_changed=on_health_factor_changed); y += 40
-	Text('corrupted_chance', (WIDTH / 2 + 40, y + 15), tr.corrupted_chance.format(chance=Wave.corrupted_chance), centered=(False, True), on_translate=on_corrupted_chance_translate); Slider('corrupted_chance', (WIDTH - 45 - slider_width, y), (slider_width, 30), values=(0, 100), ticks=10, default_value=Wave.corrupted_chance, on_value_changed=on_corrupted_chance_changed)
+	Text('corrupted_chance', (WIDTH / 2 + 40, y + 15), tr.corrupted_chance.format(chance=Wave.corrupted_chance), centered=(False, True), on_translate=on_corrupted_chance_translate); Slider('corrupted_chance', (WIDTH - 45 - slider_width, y), (slider_width, 30), values=(0, 100), ticks=10, default_value=Wave.corrupted_chance, on_value_changed=on_corrupted_chance_changed); y += 40
+	Text('enemy_config', (WIDTH / 2 + 40, y + 15), tr.reset_enemy_config, centered=(False, True), on_translate=on_enemy_config_text_translate); Button('enemy_config', (WIDTH - 45 - slider_width, y), (slider_width, 30), tr.reset, on_click=on_enemy_config_click, on_translate=on_enemy_config_translate); y += 40
+
+	def on_tower_config_translate(self):
+		self.change_text(tr.reset)
+	def on_tower_config_text_translate(self):
+		self.change_text(tr.reset_tower_config)
+	def on_tower_translate(self):
+		self.change_text(tr.towers)
+	
+	def on_tower_config_click():
+		printf("Reset tower configuration...")
+		Tower.setup_config()
+		printf("Tower configuration reset successfull")
+
+	Text('towers', (3 * WIDTH / 4, y + 15), tr.towers, centered=(True, True), on_translate=on_tower_translate, font_type=2); y += 40
+	Text('tower_config', (WIDTH / 2 + 40, y + 15), tr.reset_tower_config, centered=(False, True), on_translate=on_tower_config_text_translate); Button('tower_config', (WIDTH - 45 - slider_width, y), (slider_width, 30), tr.reset, on_click=on_tower_config_click, on_translate=on_tower_config_translate); y += 40
 
 	Button('reset', (WIDTH / 2 + 45, HEIGHT - 85), (WIDTH / 2 - 90, 40), tr.reset_settings, on_click=on_reset_gameplay_settings, on_translate=on_reset_translate)
 

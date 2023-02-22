@@ -23,8 +23,12 @@ spawning_speed,Delai d’apparition ({speed} s),Spawning delay ({speed} s)
 spawn_factor,Mul. d’apparition ({factor}),Spawn multiplier ({factor})
 health_factor,Mul. de PV / vague ({factor}),HP mult. / wave ({factor})
 enemies,Ennemis,Enemies
+towers,Tours,Towers
 corrupted_chance,Instabilité ({chance} %),Instability ({chance} %)
+reset,Réinitialiser,Reset
 reset_settings,Réinitialiser les paramètres,Reset settings
+reset_enemy_config,Réinitialiser la configuration des ennemis,Reset enemy configuration
+reset_tower_config,Réinitialiser la configuration des tours,Reset tower configuration
 tower_upgrade,Améliorer (- {cost}),Upgrade (- {cost})
 tower_delete,Détruire (+ {refund}),Destroy (+ {refund})
 tower_required_level,Niveau {level} réquis,Level {level} required
@@ -33,9 +37,9 @@ tower_hut_boost1,Flèche empoisonnée,Poison arrow
 tower_hut_boost2,Flèche dorée,Golden arrow
 tower_mortar,Mortier,Mortar
 tower_wizard,Sorcier,Wizard
-tower_fire_diffuser,Lance-flamme,Flame thrower
+tower_flame_thrower,Lance-flamme,Flame thrower
 tower_poison_diffuser,Diffuseur de poison,Poison diffuser
-tower_slowness_diffuser,Ralentisseur,Freezer
+tower_freezer,Ralentisseur,Freezer
 tower_bank,Banque,Bank
 tower_damage_booster,Boosteur de dégâts,Damage booster
 tower_range_booster,Boosteur de portée,Range booster

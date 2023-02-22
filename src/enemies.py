@@ -2,6 +2,7 @@ from math import sqrt
 import time
 import pygame
 from random import randint as rdi
+import json
 
 from enemy_effects import EnemyEffect
 from chunks import Chunk
@@ -123,6 +124,29 @@ class Enemy:
 		if corrupted:
 			Enemy.corrupted += 1
 			cls.corrupted += 1
+	
+	def setup_config():
+		with open('config/enemies.json', 'r') as cfg:
+			data = json.load(cfg)
+			for cls in Enemy.subclasses:
+				cls.load_config(data[cls.__name__])
+	
+	@classmethod
+	def load_config(cls, data):
+		cls.COIN_VALUE = data['coin_value']
+		cls.DEFAULT_HEALTH = data['health']
+		cls.MAX_HEALTH = data['health']
+		if 'speed' in data:
+			cls.DEFAULT_SPEED = data['speed']
+		if hasattr(cls, 'load_custom_config'):
+			cls.load_custom_config(data)
+
+	def classes_from_name_list(names):
+		result = []
+		for cls in Enemy.subclasses:
+			if cls.__name__ in names:
+				result.append(cls)
+		return result
 	
 	def setup_subclasses():
 		Enemy.subclasses = Enemy.__subclasses__()
@@ -447,10 +471,10 @@ class Knight(Enemy):
 	image = [None, None]
 	imrad = 0
 
-	COIN_VALUE = 8
-	DEFAULT_HEALTH = [200, 400]
-	DEFAULT_SPEED = [1.0, 2.0]
-	MAX_HEALTH = [200, 400]
+	COIN_VALUE = None
+	DEFAULT_HEALTH = None
+	DEFAULT_SPEED = None
+	MAX_HEALTH = None
 
 	def __init__(self, corrupted=0, pos=None, start=None, current_on_path=None):
 		Enemy.__init__(self, pos=pos, start=start, current_on_path=current_on_path, corrupted=corrupted)
@@ -465,10 +489,10 @@ class Goblin(Enemy):
 	image = [None, None]
 	imrad = 0
 
-	COIN_VALUE = 14
-	DEFAULT_SPEED = [1.4, 2.8]
-	DEFAULT_HEALTH = [100, 200]
-	MAX_HEALTH = [100, 200]
+	COIN_VALUE = None
+	DEFAULT_SPEED = None
+	DEFAULT_HEALTH = None
+	MAX_HEALTH = None
 
 	def __init__(self, corrupted=0):
 		Enemy.__init__(self, corrupted=corrupted)
@@ -483,10 +507,10 @@ class Dragon(Enemy):
 	image = [None, None]
 	imrad = 0
 	
-	COIN_VALUE = 40
-	DEFAULT_SPEED = [1.2, 2.4]
-	DEFAULT_HEALTH = [300, 600]
-	MAX_HEALTH = [300, 600]
+	COIN_VALUE = None
+	DEFAULT_SPEED = None
+	DEFAULT_HEALTH = None
+	MAX_HEALTH = None
 
 	def __init__(self, corrupted=0):
 		Enemy.__init__(self, corrupted=corrupted)
@@ -513,11 +537,11 @@ class KingOfKnights(Enemy):
 	image = [None, None]
 	imrad = 0
 
-	COIN_VALUE = 300
-	SPAWNING_SPEED = [5, 3.5]
-	DEFAULT_SPEED = [0.7, 1.4]
-	DEFAULT_HEALTH = [2000, 4000]
-	MAX_HEALTH = [2000, 4000]
+	COIN_VALUE = None
+	SPAWNING_SPEED = None
+	DEFAULT_SPEED = None
+	DEFAULT_HEALTH = None
+	MAX_HEALTH = None
 
 	def __init__(self, corrupted=0):
 		Enemy.__init__(self, corrupted=corrupted)
@@ -527,6 +551,10 @@ class KingOfKnights(Enemy):
 		if self.is_loaded:
 			Knight(self.corrupted, pos=(self.x, self.y), start=self.start_index, current_on_path=self.current_on_path)
 			self.is_loaded.reset()
+	
+	@classmethod
+	def load_custom_config(cls, data):
+		cls.SPAWNING_SPEED = data['spawning_speed']
 
 class Giant(Enemy):
 	follow_path = True
@@ -538,10 +566,10 @@ class Giant(Enemy):
 	image = [None, None]
 	imrad = 0
 
-	COIN_VALUE = 1000
-	DEFAULT_SPEED = [0.5, 1.0]
-	DEFAULT_HEALTH = [8000, 16000]
-	MAX_HEALTH = [8000, 16000]
+	COIN_VALUE = None
+	DEFAULT_SPEED = None
+	DEFAULT_HEALTH = None
+	MAX_HEALTH = None
 
 	def __init__(self, corrupted=0):
 		Enemy.__init__(self, corrupted=corrupted)
@@ -556,14 +584,14 @@ class Healer(Enemy):
 	image = [None, None]
 	imrad = 0
 
-	COIN_VALUE = 100
-	CAN_HEAL = [Knight, Goblin, Dragon, KingOfKnights, Giant]
-	MAX_RANGE = [7, 10]
-	HEALING_SPEED = [0.5, 0.25]
-	HEALING_AMOUNT = [120, 200]
-	DEFAULT_SPEED = [1.6, 3.2]
-	DEFAULT_HEALTH = [2000, 4000]
-	MAX_HEALTH = [2000, 4000]
+	COIN_VALUE = None
+	CAN_HEAL = None
+	MAX_RANGE = None
+	HEALING_SPEED = None
+	HEALING_AMOUNT = None
+	DEFAULT_SPEED = None
+	DEFAULT_HEALTH = None
+	MAX_HEALTH = None
 
 	def __init__(self, corrupted=0):
 		Enemy.__init__(self, corrupted=corrupted)
@@ -602,6 +630,14 @@ class Healer(Enemy):
 	
 	def on_death(self):
 		HealZone(pos=(self.x,self.y))
+	
+	@classmethod
+	def load_custom_config(cls, data):
+		can_heal = data['can_heal']
+		cls.CAN_HEAL = Enemy.classes_from_name_list(can_heal)
+		cls.HEALING_AMOUNT = data['healing_amount']
+		cls.HEALING_SPEED = data['healing_speed']
+		cls.MAX_RANGE = data['max_range']
 
 class HealZone(Enemy):
 	follow_path = False
@@ -614,14 +650,14 @@ class HealZone(Enemy):
 	imrad = 0
 	range_im = [None,None]
 	
-	COIN_VALUE = 200
-	CAN_HEAL = [Knight, Goblin, Dragon, KingOfKnights, Giant]
-	DEFAULT_RADIUS = [7, 10]
-	HEALING_SPEED = [0.075, 0.125]
-	HEALING_AMOUNT = [200, 400]
-	DEFAULT_HEALTH = [20000, 40000]
-	MAX_HEALTH = [20000, 40000]
-	MAX_DURATION = [7, 10]
+	COIN_VALUE = None
+	CAN_HEAL = None
+	DEFAULT_RADIUS = None
+	HEALING_SPEED = None
+	HEALING_AMOUNT = None
+	DEFAULT_HEALTH = None
+	MAX_HEALTH = None
+	MAX_DURATION = None
 
 	def __init__(self, corrupted=0, pos=None):
 		Enemy.__init__(self, pos=pos, corrupted=corrupted)
@@ -642,3 +678,12 @@ class HealZone(Enemy):
 		rect = (self.x-self.radius, self.y-self.radius, *HealZone.range_im[self.corrupted].get_size())
 		Enemy.new_rects.append(rect)
 		SCREEN.blit(HealZone.range_im[self.corrupted], (rect[0], rect[1]))
+
+	@classmethod
+	def load_custom_config(cls, data):
+		can_heal = data['can_heal']
+		cls.CAN_HEAL = Enemy.classes_from_name_list(can_heal)
+		cls.HEALING_AMOUNT = data['healing_amount']
+		cls.HEALING_SPEED = data['healing_speed']
+		cls.MAX_DURATION = data['max_duration']
+		cls.DEFAULT_RADIUS = data['radius']
