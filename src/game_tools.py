@@ -218,4 +218,8 @@ def generate_forest(game, x, y, empty_forest=False):
 if __name__ == "__main__":
 	"""game, paths, starts, end = generate(200, 200, 2)
 	np.savetxt('debug_data/map_now.csv', game, fmt="%d")"""
-	generate_forest(50, 50)
+	import matplotlib.pyplot as plt
+	size = (50, 50)
+	game = np.ones(size)
+	plt.imshow(generate_forest(game, *size))
+	plt.show()
