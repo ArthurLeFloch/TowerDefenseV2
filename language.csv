@@ -1,76 +1,76 @@
-Resource ID,FR,EN
-language,Français,English
-title,Tower Defense V2,Tower Defense V2
-new_map,Nouvelle carte,New map
-browse_maps,Parcourir les cartes,Browse maps
-settings,Paramètres,Settings
-general_settings,Paramètres généraux,General settings
-gameplay_settings,Paramètres de jeu,Game settings
-developer_mode,Mode développeur,Developer mode
-classic_color_theme,Classique,Classic
-old_color_theme,Ancien,Old
-language_tab,Langue,Language
-theme_tab,Thème de couleur,Color theme
-others_tab,Autres paramètres,Other settings
-max_frame_rate,FPS max ({fps}),Max FPS ({fps})
-fps_limit,Limite de FPS,FPS limit
-infinite,Inf.,Inf.
-auto_pause,Pause automatique,Automatic pause
-wave_delay,Délai entre les vagues,Delay between waves
-enemy_waves,Vagues d’ennemis,Enemy waves
-wait_duration,Délai ({duration} s),Duration ({duration} s)
-spawning_speed,Delai d’apparition ({speed} s),Spawning delay ({speed} s)
-spawn_factor,Mul. d’apparition ({factor}),Spawn multiplier ({factor})
-health_factor,Mul. de PV / vague ({factor}),HP mult. / wave ({factor})
-enemies,Ennemis,Enemies
-towers,Tours,Towers
-corrupted_chance,Instabilité ({chance} %),Instability ({chance} %)
-reset,Réinitialiser,Reset
-reset_settings,Réinitialiser les paramètres,Reset settings
-reset_enemy_config,Réinitialiser la configuration des ennemis,Reset enemy configuration
-reset_tower_config,Réinitialiser la configuration des tours,Reset tower configuration
-tower_upgrade,Améliorer (- {cost}),Upgrade (- {cost})
-tower_delete,Détruire (+ {refund}),Destroy (+ {refund})
-tower_required_level,Niveau {level} réquis,Level {level} required
-tower_hut,Hûte,Hut
-tower_hut_boost1,Flèche empoisonnée,Poison arrow
-tower_hut_boost2,Flèche dorée,Golden arrow
-tower_mortar,Mortier,Mortar
-tower_wizard,Sorcier,Wizard
-tower_flame_thrower,Lance-flamme,Flame thrower
-tower_poison_diffuser,Diffuseur de poison,Poison diffuser
-tower_freezer,Ralentisseur,Freezer
-tower_bank,Banque,Bank
-tower_damage_booster,Boosteur de dégâts,Damage booster
-tower_range_booster,Boosteur de portée,Range booster
-tower_speed_booster,Boosteur de vitesse,Speed booster
-shop_required_level,Niv. {level},Lvl. {level}
-speed,Vitesse : {speed},Speed : {speed}
-level,Niveau : {level},Level {level}
-wave,Vague n° {wave},Wave n° {wave}
-choose_boost,Veuillez choisir un BOOST :,Please choose a BOOST :
-classic_panel,Classique,Classic
-boost_panel,Boost,Boost
-boost_select,Sélectionner,Select
-money_format,{money} $,$ {money}
-confirm,Confirmer ?,Confirm ?
-delete_for,Supprimer pour : ,Delete for : 
-unlock_for,Débloquer pour : ,Unlock for : 
-dev_mode,Dev.,Dev.
-tower_desc_level,Niveau,Level
-tower_desc_range,Portée,Range
-tower_desc_damage,Dégâts,Damages
-tower_desc_dps,Dégâts / sec.,Damages / sec.
-tower_desc_mul_damage,Mult. de dégâts,Damage mult.
-tower_desc_mul_range,Mult. de portée,Range mult.
-tower_desc_mul_speed,Mult. de vitesse,Speed mult.
-tower_desc_expl_range,Rayon d’explosion,Explosion range
-tower_desc_effect_level,Niveau de {effect_name},{effect_name} level
-tower_desc_effect_duration,Durée,Duration
-tower_desc_mul_slowness,Mul. de lenteur,Slowing rate
-tower_desc_effect_dps,Dégâts / sec.,Damages / sec.
-tower_desc_reload_speed,Durée action,Action duration
-tower_desc_earn_per_action,$ / action,$ / action
-tower_desc_earn_per_sec,$ / sec.,$ / sec.
-tower_desc_gold_touch,$ / tir,$ / hit
-tower_desc_special_boost,+ BOOST spécial,+ Special BOOST
+Resource ID,FR,EN,ES
+language,Français,English,Español
+title,Tower Defense V2,Tower Defense V2,Tower Defense V2
+new_map,Nouvelle carte,New map,Nuevo mapa
+browse_maps,Parcourir les cartes,Browse maps,Explorar los mapas
+settings,Paramètres,Settings,Parámetros
+general_settings,Paramètres généraux,General settings,Parámetros generales
+gameplay_settings,Paramètres de jeu,Game settings,Configuración del juego
+developer_mode,Mode développeur,Developer mode,Modo desarrollador
+classic_color_theme,Classique,Classic,Clásico
+old_color_theme,Ancien,Old,Anterior
+language_tab,Langue,Language,Idioma
+theme_tab,Thème de couleur,Color theme,Tema de color
+others_tab,Autres paramètres,Other settings,Otros parámetros
+max_frame_rate,FPS max ({fps}),Max FPS ({fps}),FPS máximos ({fps})
+fps_limit,Limite de FPS,FPS limit,Límite de FPS
+infinite,Inf.,Inf.,Inf.
+auto_pause,Pause automatique,Automatic pause,Pausa automática
+wave_delay,Délai entre les vagues,Delay between waves,Retraso entre oleadas
+enemy_waves,Vagues d’ennemis,Enemy waves,Oleadas de enemigos
+wait_duration,Délai ({duration} s),Duration ({duration} s),Retraso ({duration} s)
+spawning_speed,Delai d’apparition ({speed} s),Spawning delay ({speed} s),Retraso enemigo ({speed} s)
+spawn_factor,Mul. d’apparition ({factor}),Spawn multiplier ({factor}),Mul. de aparición ({factor})
+health_factor,Mul. de PV / vague ({factor}),HP mult. / wave ({factor}),Mul. de PV / ola ({factor})
+enemies,Ennemis,Enemies,Enemigos
+towers,Tours,Towers,Torres
+corrupted_chance,Instabilité ({chance} %),Instability ({chance} %),Instabilidad ({chance} %)
+reset,Réinitialiser,Reset,Reset
+reset_settings,Réinitialiser les paramètres,Reset settings,Restablecer configuración
+reset_enemy_config,Réinitialiser la configuration des ennemis,Reset enemy configuration,Restablecer la configuración enemiga
+reset_tower_config,Réinitialiser la configuration des tours,Reset tower configuration,Restablecer la configuración de las torres
+tower_upgrade,Améliorer (- {cost}),Upgrade (- {cost}),Mejorar (- {cost})
+tower_delete,Détruire (+ {refund}),Destroy (+ {refund}),Destruir (+ {refund})
+tower_required_level,Niveau {level} réquis,Level {level} required,Nivel {level} requerido
+tower_hut,Hûte,Hut,Hut
+tower_hut_boost1,Flèche empoisonnée,Poison arrow,Flecha venenosa
+tower_hut_boost2,Flèche dorée,Golden arrow,Flecha de oro
+tower_mortar,Mortier,Mortar,Mortero
+tower_wizard,Sorcier,Wizard,Mago
+tower_flame_thrower,Lance-flamme,Flame thrower,Lanzallamas
+tower_poison_diffuser,Diffuseur de poison,Poison diffuser,Difusor de veneno
+tower_freezer,Ralentisseur,Freezer,Ralentizador
+tower_bank,Banque,Bank,Banco
+tower_damage_booster,Boosteur de dégâts,Damage booster,Potenciador de daños
+tower_range_booster,Boosteur de portée,Range booster,Potenciador de alcance
+tower_speed_booster,Boosteur de vitesse,Speed booster,Potenciador de velocidad
+shop_required_level,Niv. {level},Lvl. {level},Niv. {level}
+speed,Vitesse : {speed},Speed : {speed},Velocidad : {speed}
+level,Niveau : {level},Level : {level},Nivel : {level}
+wave,Vague n° {wave},Wave n° {wave},Oleada n° {wave}
+choose_boost,Veuillez choisir un BOOST :,Please choose a BOOST :,Elija un IMPULSO :
+classic_panel,Classique,Classic,Clásico
+boost_panel,Boost,Boost,Impulso
+boost_select,Sélectionner,Select,Seleccionar
+money_format,{money} $,$ {money},{money} $
+confirm,Confirmer ?,Confirm ?,¿Confirmar?
+delete_for,Supprimer pour : ,Delete for : ,Suprimir por :
+unlock_for,Débloquer pour : ,Unlock for : ,Desbloquear para :
+dev_mode,Dev.,Dev.,Des.
+tower_desc_level,Niveau,Level,Nivel 
+tower_desc_range,Portée,Range,Alcance
+tower_desc_damage,Dégâts,Damages,Daños
+tower_desc_dps,Dégâts / sec.,Damages / sec.,Daños / seg.
+tower_desc_mul_damage,Mult. de dégâts,Damage mult.,Mul. de daños
+tower_desc_mul_range,Mult. de portée,Range mult.,Mul. de alcance
+tower_desc_mul_speed,Mult. de vitesse,Speed mult.,Mul. de velocidad
+tower_desc_expl_range,Rayon d’explosion,Explosion range,Alcance explosivo
+tower_desc_effect_level,Niveau de {effect_name},{effect_name} level,Nivel de {effect_name}
+tower_desc_effect_duration,Durée,Duration,Duración
+tower_desc_mul_slowness,Mul. de lenteur,Slowing rate,Mul. de lentitud
+tower_desc_effect_dps,Dégâts / sec.,Damages / sec.,Daños / seg.
+tower_desc_reload_speed,Durée action,Action duration,Duración de acción
+tower_desc_earn_per_action,$ / action,$ / action,$ / acción
+tower_desc_earn_per_sec,$ / sec.,$ / sec.,$ / seg.
+tower_desc_gold_touch,$ / tir,$ / hit,$ / tiro
+tower_desc_special_boost,+ BOOST spécial,+ Special BOOST,+ IMPULSO especial

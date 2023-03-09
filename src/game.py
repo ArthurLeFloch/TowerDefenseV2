@@ -421,11 +421,13 @@ def create_settings_menu():
 
 	slider_width = (WIDTH / 2 - 200) / 2
 
-	linked_lang = ['lang_fr', 'lang_en']
+	linked_lang = ['lang_fr', 'lang_en', 'lang_es']
 	def on_fr_check():
 		reset_game_menu("FR")
 	def on_en_check():
 		reset_game_menu("EN")
+	def on_es_check():
+		reset_game_menu("ES")
 	
 	def on_dev_action(is_checked):
 		settings['dev'] = is_checked
@@ -475,6 +477,8 @@ def create_settings_menu():
 	Text('lang_fr', (40, y + 15), tr._table["FR"]["language"], centered=(False, True)); CheckBox('lang_fr', (cb_x, y), is_checked=("FR" == tr._language), linked=linked_lang, on_check=on_fr_check)
 	y += 40
 	Text('lang_en', (40, y + 15), tr._table["EN"]["language"], centered=(False, True)); CheckBox('lang_en', (cb_x, y), is_checked=("EN" == tr._language), linked=linked_lang, on_check=on_en_check)
+	y += 40
+	Text('lang_es', (40, y + 15), tr._table["ES"]["language"], centered=(False, True)); CheckBox('lang_es', (cb_x, y), is_checked=("ES" == tr._language), linked=linked_lang, on_check=on_es_check)
 	y += 40
 
 	linked_theme = ['color_theme_classic', 'color_theme_old']
