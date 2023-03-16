@@ -157,7 +157,7 @@ title_pos = (WIDTH / 2 - title_width / 2, 40)
 title = glow(get_image((title_width, title_height), 'images/others/title.png'))
 
 Button('new_map', (WIDTH/2 - 150, HEIGHT/2), (300, 50), tr.new_map, font_type=1)
-Button('browse_maps', (WIDTH/2 - 150, HEIGHT/2 + 100), (300, 50), tr.browse_maps, font_type=1) # ? Share maps ?
+Button('browse_maps', (WIDTH/2 - 150, HEIGHT/2 + 100), (300, 50), tr.browse_maps, locked=True, font_type=1) # ? Share maps ?
 Button('settings', (WIDTH/2 - 150, HEIGHT/2 + 200), (300, 50), tr.settings, font_type=1)
 
 tile_size = 28
@@ -621,7 +621,7 @@ def nav_game_to_menu():
 	settings['playing'] = True
 	UI.delete_all()
 	Button("new_map", (WIDTH/2 - 150, HEIGHT/2), (300, 50), tr.new_map, font_type=1)
-	Button("browse_maps", (WIDTH/2 - 150, HEIGHT/2 + 100), (300, 50), tr.browse_maps, font_type=1)
+	Button("browse_maps", (WIDTH/2 - 150, HEIGHT/2 + 100), (300, 50), tr.browse_maps, locked=True, font_type=1)
 	Button("settings", (WIDTH/2 - 150, HEIGHT/2 + 200), (300, 50), tr.settings, font_type=1)
 
 def nav_menu_to_settings():
@@ -635,7 +635,7 @@ def nav_settings_to_menu():
 	current_menu = "menu"
 	UI.delete_all()
 	Button("new_map", (WIDTH/2 - 150, HEIGHT/2), (300, 50), tr.new_map, font_type=1)
-	Button("browse_maps", (WIDTH/2 - 150, HEIGHT/2 + 100), (300, 50), tr.browse_maps, font_type=1)
+	Button("browse_maps", (WIDTH/2 - 150, HEIGHT/2 + 100), (300, 50), tr.browse_maps, locked=True, font_type=1)
 	Button("settings", (WIDTH/2 - 150, HEIGHT/2 + 200), (300, 50), tr.settings, font_type=1)
 
 def nav_menu_to_game():
