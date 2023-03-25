@@ -60,7 +60,7 @@ Game.LIFEMAX = 20
 
 clock = pygame.time.Clock()
 pygame.display.set_caption(tr.title)
-icon = pygame.image.load('images/others/icon.ico')
+icon = pygame.image.load('images/others/icon.png')
 pygame.display.set_icon(icon)
 
 game = None
