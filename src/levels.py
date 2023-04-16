@@ -10,7 +10,7 @@ class Level:
 		"""
 		Returns needed xp for next level
 		"""
-		return 10*self.level**1.5
+		return 10 + 10 * self.level ** 1.2
 
 	def try_leveling_up(self):
 		"""
