@@ -931,14 +931,15 @@ while execute:
 							remove_info_bubble()
 						elif not info_bubble:
 							game.init_selection(xc, yc)
-						tmp = selected_tower
-						selected_tower = Tower.get(xc, yc)
-						if selected_tower:
-							printf("Selected tower")
-							remove_info_bubble()
-							setup_upgrade_buttons(selected_tower)
-						elif tmp:
-							Button.delete('upgrade', 'delete', 'boost1', 'boost2', 'stats', 'bstats')
+						if (info_bubble and not is_on_rect((x, y), info_rect)) or not info_bubble:
+							tmp = selected_tower
+							selected_tower = Tower.get(xc, yc)
+							if selected_tower:
+								printf("Selected tower")
+								remove_info_bubble()
+								setup_upgrade_buttons(selected_tower)
+							elif tmp:
+								Button.delete('upgrade', 'delete', 'boost1', 'boost2', 'stats', 'bstats')
 					elif x > Menu.SHOP_POS[0]:
 						if info_bubble:
 							remove_info_bubble()
