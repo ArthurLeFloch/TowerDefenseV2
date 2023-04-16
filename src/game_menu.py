@@ -513,7 +513,7 @@ class Menu:
 		for k in range(fi, min(fi + Menu.SHOP_ITEM_PER_TAB, self.shop_item_count)):
 			data = self.shop_items[k]
 			cls = data[0]
-			if is_on_rect((xm, ym), ([x, y + Menu.SHOP_ELEMENT_HEIGHT * (k - fi)], Menu.SHOP_WIDTH, 90)) and self.val_coin >= cls.COST[0]:
+			if is_on_rect((xm, ym), ([x, y + Menu.SHOP_ELEMENT_HEIGHT * (k - fi)], Menu.SHOP_WIDTH, 90)) and self.val_coin >= cls.COST[0] and self.val_level >= cls.ALLOWED_LEVEL[0]:
 				return cls
 		
 	#endregion
