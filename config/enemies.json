@@ -1,34 +1,34 @@
 {	
 	"Knight": {
 		"coin_value": 8,
-		"health": [200, 400],
-		"speed": [1.0, 2.0]
+		"health": [200, 300],
+		"speed": [1.0, 1.5]
 	},
 	"Goblin": {
 		"coin_value": 14,
-		"health": [100, 200],
-		"speed": [1.4, 2.8]		
+		"health": [100, 150],
+		"speed": [1.4, 2.1]		
 	},
 	"Dragon": {
 		"coin_value": 40,
-		"health": [300, 600],
-		"speed": [1.2, 2.4]
+		"health": [300, 450],
+		"speed": [1.2, 1.8]
 	},
 	"KingOfKnights": {
 		"coin_value": 300,
-		"health": [2000, 4000],
-		"speed": [0.7, 1.4],
+		"health": [2000, 3000],
+		"speed": [0.7, 1.05],
 		"spawning_speed": [5, 3.5]
 	},
 	"Giant": {
 		"coin_value": 1000,
-		"health": [8000, 16000],
-		"speed": [0.5, 1.0]		
+		"health": [8000, 12000],
+		"speed": [0.5, 0.75]		
 	},
 	"Healer": {
 		"coin_value": 100,
-		"health": [2000, 4000],
-		"speed": [1.6, 3.2],
+		"health": [2000, 3000],
+		"speed": [1.6, 2.4],
 		"can_heal": ["Knight", "Goblin", "Dragon", "KingOfKnights", "Giant"],
 		"healing_amount": [120, 200],
 		"healing_speed": [0.5, 0.25],
@@ -36,7 +36,7 @@
 	},
 	"HealZone": {
 		"coin_value": 200,
-		"health": [20000, 40000],
+		"health": [20000, 30000],
 		"can_heal": ["Knight", "Goblin", "Dragon", "KingOfKnights", "Giant"],
 		"healing_amount": [200, 400],
 		"healing_speed": [0.075, 0.125],
