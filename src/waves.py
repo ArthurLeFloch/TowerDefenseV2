@@ -45,7 +45,7 @@ class Wave:
 	
 	def rdc():
 		val = rdi(0, 100)
-		return (val <= Wave.corrupted_chance)
+		return (val < Wave.corrupted_chance)
 
 	def generate(wave, lvl):
 		Enemy.update_health(lvl, Wave.health_factor)
