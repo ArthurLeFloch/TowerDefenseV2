@@ -14,9 +14,10 @@ class EnemyEffect:
 		self.duration = duration
 		self.is_dead = Timer(duration)
 	
-	def update():
-		for cls in EnemyEffect.subclasses:
-			cls._update()
+	def update(logic_update = True):
+		if logic_update:
+			for cls in EnemyEffect.subclasses:
+				cls._update()
 	
 	def setup_subclasses():
 		EnemyEffect.subclasses = EnemyEffect.__subclasses__()

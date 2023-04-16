@@ -390,7 +390,7 @@ class Tower:
 		Tower.last_rects = Tower.new_rects.copy()
 		Tower.new_rects = []
 
-		EnemyEffect.update()
+		EnemyEffect.update(logic_update)
 		Tower.looked = None
 		
 		for cls in Tower.subclasses:
