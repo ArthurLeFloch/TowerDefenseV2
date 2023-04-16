@@ -650,7 +650,7 @@ def nav_menu_to_game():
 	ImageButton.unlock('speed_down')
 	if settings['speed'] == 1:
 		ImageButton.lock('speed_down')
-	if settings['speed'] == 5:
+	if settings['speed'] == 10:
 		ImageButton.lock('speed_up')
 	Button.delete("new_map", "browse_maps", "settings")
 
@@ -669,7 +669,7 @@ def change_speed(speed):
 	ImageButton.unlock('speed_down')
 	if settings['speed'] == 1:
 		ImageButton.lock('speed_down')
-	if settings['speed'] == 5:
+	if settings['speed'] == 10:
 		ImageButton.lock('speed_up')
 	game.set_speed(settings['speed'])
 
@@ -734,9 +734,9 @@ def on_play_pause_click():
 		ImageButton.set_button_image('play_pause', "images/others/play.ppm")
 
 def on_speed_up_click():
-	if settings['speed'] < 5:
+	if settings['speed'] < 10:
 		change_speed(settings['speed']+1)
-	if settings["speed"] == 5:
+	if settings["speed"] == 10:
 		ImageButton.lock('speed_up')
 	ImageButton.unlock('speed_down')
 
