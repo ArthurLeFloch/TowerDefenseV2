@@ -654,6 +654,8 @@ def nav_menu_to_game():
 		ImageButton.lock('speed_up')
 	Button.delete("new_map", "browse_maps", "settings")
 
+	change_speed(settings['speed'])
+
 def add_coins(value):
 	game.add_coins(value)
 	if selected_tower and Button.exists('upgrade'):
